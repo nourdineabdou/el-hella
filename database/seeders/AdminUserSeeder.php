@@ -11,10 +11,11 @@ class AdminUserSeeder extends Seeder
     public function run(): void
     {
         $admin = User::firstOrCreate(
-            ['email' => 'admin@elhella.com'],
+            ['phone' => '36888222'],
             [
-                'name' => 'Administrateur',
-                'password' => Hash::make('password'),
+                'name' => 'Mohamed Limam',
+                'email' => '36888222@elhella.local',
+                'password' => Hash::make('12345678'),
                 'role' => 'admin',
                 'language' => 'ar',
                 'is_active' => true,

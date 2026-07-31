@@ -25,11 +25,11 @@
                 </div>
                 <div class="col-12 col-md-6">
                     <label class="form-label small fw-semibold">{{ __('New Password') }}</label>
-                    <input type="password" name="password" class="form-control" autocomplete="new-password" enterkeyhint="next" minlength="8" required>
+                    <input type="password" name="password" class="form-control" autocomplete="new-password" enterkeyhint="next" minlength="4" required>
                 </div>
                 <div class="col-12 col-md-6">
                     <label class="form-label small fw-semibold">{{ __('Confirm Password') }}</label>
-                    <input type="password" name="password_confirmation" class="form-control" autocomplete="new-password" enterkeyhint="done" minlength="8" required>
+                    <input type="password" name="password_confirmation" class="form-control" autocomplete="new-password" enterkeyhint="done" minlength="4" required>
                 </div>
 
                 <div class="col-12 d-grid d-md-flex justify-content-md-end">
@@ -117,11 +117,11 @@
                                                     <div class="row g-3">
                                                         <div class="col-12">
                                                             <label class="form-label small fw-semibold">{{ __('New Password') }}</label>
-                                                            <input type="password" name="password" class="form-control" autocomplete="new-password" minlength="8" required>
+                                                            <input type="password" name="password" class="form-control" autocomplete="new-password" minlength="4" required>
                                                         </div>
                                                         <div class="col-12">
                                                             <label class="form-label small fw-semibold">{{ __('Confirm Password') }}</label>
-                                                            <input type="password" name="password_confirmation" class="form-control" autocomplete="new-password" minlength="8" required>
+                                                            <input type="password" name="password_confirmation" class="form-control" autocomplete="new-password" minlength="4" required>
                                                         </div>
                                                     </div>
                                                 </div>

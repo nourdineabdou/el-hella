@@ -30,7 +30,7 @@ class DistributorController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:30', 'unique:users,phone', 'regex:/^[0-9+\s\-()]+$/'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => ['required', 'string', 'min:4', 'confirmed'],
         ]);
 
         $email = $this->generateEmail($validated['phone']);
@@ -63,7 +63,7 @@ class DistributorController extends Controller
     public function resetPassword(Request $request, Distributor $distributor): RedirectResponse
     {
         $validated = $request->validate([
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => ['required', 'string', 'min:4', 'confirmed'],
         ]);
 
         $distributor->user()->update([

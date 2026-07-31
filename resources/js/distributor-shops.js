@@ -430,7 +430,7 @@ function handleShopShow() {
     const selectedProductCount = document.querySelector('#selected-product-count');
     const selectedProducts = new Map();
 
-    const clampQuantity = (value) => Math.max(0, value);
+    const clampQuantity = (value) => Math.max(1, value);
 
     const buildSelectedProductRow = (product) => {
         const row = document.createElement('tr');
@@ -445,7 +445,7 @@ function handleShopShow() {
             <td>
                 <div class="quantity-stepper mx-auto">
                     <button type="button" class="btn btn-outline-secondary quantity-btn quantity-decrement" aria-label="${getTranslation('decrease', 'Decrease')}">−</button>
-                    <input type="number" inputmode="decimal" min="0" step="any" value="1" class="form-control form-control-lg text-center product-quantity-input" />
+                    <input type="number" inputmode="decimal" min="1" step="any" value="1" class="form-control form-control-lg text-center product-quantity-input" />
                     <button type="button" class="btn btn-outline-secondary quantity-btn quantity-increment" aria-label="${getTranslation('increase', 'Increase')}">+</button>
                 </div>
             </td>
