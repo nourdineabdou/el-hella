@@ -29,6 +29,16 @@ function getTranslation(key, fallback) {
     return window.distributorShopTranslations?.[key] ?? fallback ?? key;
 }
 
+// Matches the server's ShopController::MAX_ACCURACY_BONUS_METERS so the
+// client-side gate never contradicts what the server will actually accept.
+const MAX_ACCURACY_BONUS_METERS = 50;
+
+function isWithinAllowedDistance(distance, accuracy, maxDistance) {
+    const accuracyBonus = Math.min(accuracy || 0, MAX_ACCURACY_BONUS_METERS);
+    const effectiveDistance = Math.max(0, distance - accuracyBonus);
+    return effectiveDistance <= maxDistance;
+}
+
 function describeGeolocationError(error) {
     if (typeof window.isSecureContext !== 'undefined' && !window.isSecureContext) {
         return getTranslation('insecureContext', 'Location requires a secure (HTTPS) connection. Ask your administrator to enable HTTPS on this site.');
@@ -300,11 +310,13 @@ function handleShopShow() {
                 position.coords.longitude,
             );
 
+            const withinRange = isWithinAllowedDistance(distance, position.coords.accuracy, maxDistance);
+
             distanceLabel.textContent = formatDistance(distance);
-            currentLocationInfo.textContent = `${getTranslation('youAreAt', 'You are')} ${formatDistance(distance)} ${getTranslation('fromShop', 'from the shop')}.`;
-            locationNote.textContent = distance <= maxDistance ? getTranslation('validationPossible', 'Validation possible') : getTranslation('tooFarToValidate', 'Too far to validate');
-            locationNote.classList.toggle('text-success', distance <= maxDistance);
-            locationNote.classList.toggle('text-danger', distance > maxDistance);
+            currentLocationInfo.textContent = `${getTranslation('youAreAt', 'You are')} ${formatDistance(distance)} ${getTranslation('fromShop', 'from the shop')} (${getTranslation('gpsAccuracy', 'GPS accuracy')}: ±${Math.round(position.coords.accuracy || 0)} ${getTranslation('distanceUnit', 'm')}).`;
+            locationNote.textContent = withinRange ? getTranslation('validationPossible', 'Validation possible') : getTranslation('tooFarToValidate', 'Too far to validate');
+            locationNote.classList.toggle('text-success', withinRange);
+            locationNote.classList.toggle('text-danger', !withinRange);
         } catch (error) {
             currentPosition = null;
             lastLocationError = error;
@@ -370,7 +382,7 @@ function handleShopShow() {
             currentPosition.longitude,
         );
 
-        if (distance > maxDistance) {
+        if (!isWithinAllowedDistance(distance, currentPosition.accuracy, maxDistance)) {
             setActionCardsLoading(false);
             Swal.fire({ icon: 'error', title: getTranslation('tooFarValidate', 'Too far to validate'), text: getTranslation('tooFarVisit', 'You must be within the allowed distance of the shop to validate the visit.') });
             return;
@@ -587,7 +599,7 @@ function handleShopShow() {
             currentPosition.longitude,
         );
 
-        if (distance > maxDistance) {
+        if (!isWithinAllowedDistance(distance, currentPosition.accuracy, maxDistance)) {
             setActionCardsLoading(false);
             setSubmitLoading(saleForm, false);
             Swal.fire({ icon: 'error', title: getTranslation('tooFarValidate', 'Too far to validate'), text: getTranslation('saleValidationTooFar', 'You must be within the allowed distance of the shop to validate the sale.') });

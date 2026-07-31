@@ -23,6 +23,7 @@
             saleError: '{{ __('Unable to save the sale.') }}',
             distanceUnit: '{{ __('m') }}',
             distanceUnitKm: '{{ __('km') }}',
+            gpsAccuracy: '{{ __('GPS accuracy') }}',
             errorTitle: '{{ __('Error') }}',
             searchError: '{{ __('Search error. Please try again.') }}',
             youAreAt: '{{ __('You are') }}',
