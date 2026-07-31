@@ -618,7 +618,7 @@ function handleShopShow() {
                 product_id: row.dataset.productId,
                 quantity: parseFloat(row.querySelector('.product-quantity-input').value) || 0,
             };
-        }).filter(item => item.quantity > 0);
+        }).filter((item) => item.quantity > 0);
 
         if (items.length === 0) {
             setActionCardsLoading(false);

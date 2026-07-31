@@ -23,8 +23,8 @@ class GoalController extends Controller
             'distributor_id' => ['nullable', 'exists:distributors,id'],
         ]);
 
-        $dateFrom = $request->input('date_from') ?: today()->startOfMonth()->toDateString();
-        $dateTo = $request->input('date_to') ?: today()->toDateString();
+        $dateFrom = $request->input('date_from') ?: today()->toDateString();
+        $dateTo = $request->input('date_to') ?: today()->addDays(2)->toDateString();
 
         $query = DistributorGoal::with('distributor.user')
             ->whereBetween('goal_date', [$dateFrom, $dateTo]);
@@ -33,7 +33,7 @@ class GoalController extends Controller
             $query->where('distributor_id', $request->input('distributor_id'));
         }
 
-        $goals = $query->orderBy('goal_date', 'desc')
+        $goals = $query->orderBy('goal_date', 'asc')
             ->orderBy('distributor_id')
             ->paginate(10)
             ->withQueryString();
