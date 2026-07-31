@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node \"C:\\\\Users\\\\KTBI3G~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--laragon-www-el-hella\\\\5cdf5d34-8159-425d-ab08-7a4effbdd84f\\\\scratchpad\\\\check-dist-dashboard.cjs\")",
+      "Bash(node tests/e2e/_manual-check.cjs)",
+      "Bash(time curl -s -o /dev/null -w \"HTTP %{http_code} in %{time_total}s\\\\n\" http://el-hella.test/login --max-time 15)",
+      "Bash(tasklist //FI \"IMAGENAME eq mysqld.exe\")"
+    ]
+  }
+}
