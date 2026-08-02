@@ -181,7 +181,10 @@ function handleShopCreation() {
 
             window.location.href = `/distributor/shops/${response.shop.id}`;
         } catch (error) {
-            const message = error.responseJSON?.message || error.message || getTranslation('validationError', 'Unable to save the shop.');
+            const message = error.responseJSON?.message
+                || (typeof error?.code === 'number' ? describeGeolocationError(error) : null)
+                || error.message
+                || getTranslation('validationError', 'Unable to save the shop.');
             await Swal.fire({ icon: 'error', title: getTranslation('errorTitle', 'Error'), text: message });
         } finally {
             createButton.disabled = false;
