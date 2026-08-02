@@ -673,18 +673,27 @@ function primeLocationPermission() {
         return;
     }
 
-    if (navigator.permissions?.query) {
-        navigator.permissions.query({ name: 'geolocation' }).then((status) => {
-            if (status.state !== 'granted') {
-                navigator.geolocation.getCurrentPosition(() => {}, () => {}, quickGeolocationOptions);
-            }
-        }).catch(() => {
-            navigator.geolocation.getCurrentPosition(() => {}, () => {}, quickGeolocationOptions);
-        });
-        return;
+    const requestLocation = () => navigator.geolocation.getCurrentPosition(() => {}, () => {}, quickGeolocationOptions);
+
+    // Safari does not fully support the Permissions API for 'geolocation' and
+    // can throw synchronously instead of rejecting a promise, so this whole
+    // check is wrapped defensively and always falls back to just asking.
+    try {
+        if (navigator.permissions?.query) {
+            navigator.permissions.query({ name: 'geolocation' })
+                .then((status) => {
+                    if (status.state !== 'granted') {
+                        requestLocation();
+                    }
+                })
+                .catch(requestLocation);
+            return;
+        }
+    } catch (error) {
+        // fall through to requestLocation() below
     }
 
-    navigator.geolocation.getCurrentPosition(() => {}, () => {}, quickGeolocationOptions);
+    requestLocation();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
