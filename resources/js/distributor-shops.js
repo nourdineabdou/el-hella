@@ -665,7 +665,30 @@ function getDistanceBetween(lat1, lon1, lat2, lon2) {
     return Math.round(R * c);
 }
 
+// Ask for location permission as soon as a distributor lands on any page,
+// instead of only discovering it's missing once they try to create a shop
+// or validate a visit deep in the flow.
+function primeLocationPermission() {
+    if (document.body.dataset.role !== 'distributor' || !navigator.geolocation) {
+        return;
+    }
+
+    if (navigator.permissions?.query) {
+        navigator.permissions.query({ name: 'geolocation' }).then((status) => {
+            if (status.state !== 'granted') {
+                navigator.geolocation.getCurrentPosition(() => {}, () => {}, quickGeolocationOptions);
+            }
+        }).catch(() => {
+            navigator.geolocation.getCurrentPosition(() => {}, () => {}, quickGeolocationOptions);
+        });
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(() => {}, () => {}, quickGeolocationOptions);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    primeLocationPermission();
     handleSearchInput();
     handleShopCreation();
     handleShopShow();

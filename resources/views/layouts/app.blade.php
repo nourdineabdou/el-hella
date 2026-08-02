@@ -11,7 +11,7 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body>
+    <body data-role="{{ auth()->user()?->role }}">
         <div class="eh-wrapper">
             @include('layouts.partials.sidebar')
 
