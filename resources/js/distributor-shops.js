@@ -39,6 +39,11 @@ function isWithinAllowedDistance(distance, accuracy, maxDistance) {
     return effectiveDistance <= maxDistance;
 }
 
+function isIOSDevice() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent)
+        || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
 function describeGeolocationError(error) {
     if (typeof window.isSecureContext !== 'undefined' && !window.isSecureContext) {
         return getTranslation('insecureContext', 'Location requires a secure (HTTPS) connection. Ask your administrator to enable HTTPS on this site.');
@@ -46,6 +51,10 @@ function describeGeolocationError(error) {
 
     if (error && typeof error.code === 'number') {
         if (error.code === 1) {
+            if (isIOSDevice()) {
+                return getTranslation('locationPermissionDeniedIOS', 'Location access was denied. On iPhone: Settings > Privacy & Security > Location Services > Safari Websites, set it to Allow, then reload this page.');
+            }
+
             return getTranslation('locationPermissionDenied', 'Location access was denied. Enable location for this site in your browser or phone settings, then try again.');
         }
 

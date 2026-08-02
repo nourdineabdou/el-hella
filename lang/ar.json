@@ -110,6 +110,7 @@
     "results": "نتيجة",
     "Location requires a secure (HTTPS) connection. Ask your administrator to enable HTTPS on this site.": "يتطلب تحديد الموقع اتصالًا آمنًا (HTTPS). يرجى الطلب من المسؤول تفعيل HTTPS على هذا الموقع.",
     "Location access was denied. Enable location for this site in your browser or phone settings, then try again.": "تم رفض الوصول إلى الموقع. فعّل خدمة الموقع لهذا الموقع من إعدادات المتصفح أو الهاتف، ثم أعد المحاولة.",
+    "Location access was denied. On iPhone: Settings > Privacy & Security > Location Services > Safari Websites, set it to Allow, then reload this page.": "تم رفض الوصول إلى الموقع. على الآيفون: اذهب إلى الإعدادات > الخصوصية والأمان > خدمات الموقع > Safari، واختر «عند الاستخدام»، ثم أعد تحميل الصفحة.",
     "Unable to determine your position. Check that GPS is enabled.": "تعذر تحديد موقعك. تأكد من تفعيل GPS.",
     "Location request timed out. Move to an open area and try again.": "انتهت مهلة طلب الموقع. انتقل إلى مكان مفتوح وأعد المحاولة.",
     "Error": "خطأ"

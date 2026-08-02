@@ -24,6 +24,8 @@ return [
     'top_shops_title' => 'Top 5 des boutiques (par quantité achetée)',
     'top_shops_empty' => 'Pas encore assez de ventes pour établir un classement.',
     'close' => 'Fermer',
+    'share_whatsapp' => 'Partager sur WhatsApp',
+    'share_visit_location_text' => 'Position de la visite chez :shop (:date) :',
     'filter_shop' => 'Boutique',
     'all_shops' => 'Toutes les boutiques',
     'view_all' => 'Voir tout',

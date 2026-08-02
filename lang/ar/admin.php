@@ -24,6 +24,8 @@ return [
     'top_shops_title' => 'أفضل 5 متاجر (حسب الكمية المشتراة)',
     'top_shops_empty' => 'لا توجد مبيعات كافية بعد لإنشاء ترتيب.',
     'close' => 'إغلاق',
+    'share_whatsapp' => 'مشاركة عبر واتساب',
+    'share_visit_location_text' => 'موقع الزيارة عند :shop (:date):',
     'filter_shop' => 'المتجر',
     'all_shops' => 'كل المتاجر',
     'view_all' => 'عرض الكل',

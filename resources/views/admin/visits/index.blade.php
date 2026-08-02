@@ -125,6 +125,15 @@
                                                             @endif
                                                         </div>
                                                         <div class="modal-footer">
+                                                            @if ($visit->latitude && $visit->longitude)
+                                                                @php
+                                                                    $mapsUrl = 'https://www.google.com/maps/dir/?api=1&destination='.$visit->latitude.','.$visit->longitude;
+                                                                    $shareText = __('admin.share_visit_location_text', ['shop' => $visit->shop?->name, 'date' => $visit->visited_at?->format('d/m/Y H:i')]).' '.$mapsUrl;
+                                                                @endphp
+                                                                <a href="https://wa.me/?text={{ urlencode($shareText) }}" target="_blank" rel="noopener" class="btn btn-success">
+                                                                    <i class="bi bi-whatsapp"></i> {{ __('admin.share_whatsapp') }}
+                                                                </a>
+                                                            @endif
                                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('admin.close') }}</button>
                                                         </div>
                                                     </div>

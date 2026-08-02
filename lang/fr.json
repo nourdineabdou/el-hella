@@ -110,6 +110,7 @@
     "results": "résultats",
     "Location requires a secure (HTTPS) connection. Ask your administrator to enable HTTPS on this site.": "La localisation nécessite une connexion sécurisée (HTTPS). Demandez à l'administrateur d'activer HTTPS sur ce site.",
     "Location access was denied. Enable location for this site in your browser or phone settings, then try again.": "L'accès à la localisation a été refusé. Activez la localisation pour ce site dans les paramètres de votre navigateur ou de votre téléphone, puis réessayez.",
+    "Location access was denied. On iPhone: Settings > Privacy & Security > Location Services > Safari Websites, set it to Allow, then reload this page.": "L'accès à la localisation a été refusé. Sur iPhone : allez dans Réglages > Confidentialité et sécurité > Service de localisation > Safari, choisissez « Lors de l'utilisation de l'app », puis rechargez cette page.",
     "Unable to determine your position. Check that GPS is enabled.": "Impossible de déterminer votre position. Vérifiez que le GPS est activé.",
     "Location request timed out. Move to an open area and try again.": "La demande de localisation a expiré. Déplacez-vous dans un endroit dégagé et réessayez.",
     "Error": "Erreur"

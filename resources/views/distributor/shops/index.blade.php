@@ -23,6 +23,12 @@
             distanceUnitKm: '{{ __('km') }}',
             errorTitle: '{{ __('Error') }}',
             locatingShops: '{{ __('Locating nearby shops...') }}',
+            insecureContext: '{{ __('Location requires a secure (HTTPS) connection. Ask your administrator to enable HTTPS on this site.') }}',
+            locationPermissionDenied: '{{ __('Location access was denied. Enable location for this site in your browser or phone settings, then try again.') }}',
+            locationPermissionDeniedIOS: '{{ __('Location access was denied. On iPhone: Settings > Privacy & Security > Location Services > Safari Websites, set it to Allow, then reload this page.') }}',
+            locationUnavailable: '{{ __('Unable to determine your position. Check that GPS is enabled.') }}',
+            locationTimeout: '{{ __('Location request timed out. Move to an open area and try again.') }}',
+            cantRetrieveLocation: '{{ __('Unable to retrieve your location. Enable GPS.') }}',
         };
     </script>
 
