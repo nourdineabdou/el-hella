@@ -17,6 +17,7 @@ class Visit extends Model
         'observation',
         'latitude',
         'longitude',
+        'zone',
         'gps_accuracy',
         'distance_from_shop',
         'is_within_allowed_distance',

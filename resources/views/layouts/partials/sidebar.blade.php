@@ -25,6 +25,10 @@ $user = auth()->user();
                 <i class="bi bi-map"></i>
                 <span>{{ __('menu.map') }}</span>
             </a>
+            <a href="{{ route('admin.gps-alerts.index') }}" class="nav-link {{ request()->routeIs('admin.gps-alerts.*') ? 'active' : '' }}">
+                <i class="bi bi-exclamation-triangle"></i>
+                <span>{{ __('menu.gps_alerts') }}</span>
+            </a>
             <a href="{{ route('admin.goals.index') }}" class="nav-link {{ request()->routeIs('admin.goals.*') ? 'active' : '' }}">
                 <i class="bi bi-bullseye"></i>
                 <span>{{ __('menu.goals') }}</span>
@@ -36,6 +40,10 @@ $user = auth()->user();
             <a href="{{ route('admin.products.index') }}" class="nav-link {{ request()->routeIs('admin.products.*') ? 'active' : '' }}">
                 <i class="bi bi-box-seam"></i>
                 <span>{{ __('menu.products') }}</span>
+            </a>
+            <a href="{{ route('admin.products-sold.index') }}" class="nav-link {{ request()->routeIs('admin.products-sold.*') ? 'active' : '' }}">
+                <i class="bi bi-graph-up"></i>
+                <span>{{ __('menu.products_sold') }}</span>
             </a>
         @else
             <a href="{{ route('distributor.dashboard') }}" class="nav-link {{ request()->routeIs('distributor.dashboard') ? 'active' : '' }}">

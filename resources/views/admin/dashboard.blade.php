@@ -47,7 +47,7 @@
         </div>
 
         <div class="col-6 col-lg-3">
-            <div class="card eh-stat-card h-100">
+            <a href="{{ route('admin.gps-alerts.index') }}" class="card eh-stat-card h-100 text-reset text-decoration-none d-block">
                 <div class="card-body d-flex align-items-center gap-3">
                     <div class="eh-stat-icon bg-warning-subtle text-warning">
                         <i class="bi bi-exclamation-triangle"></i>
@@ -57,7 +57,7 @@
                         <div class="fs-4 fw-bold">{{ $gpsAlertsCount }}</div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
 
@@ -132,6 +132,11 @@
                                                 <dt class="col-5 text-muted fw-normal">{{ __('dashboard.table_distance') }}</dt>
                                                 <dd class="col-7 mb-1">{{ $visit->formatted_distance ?? '—' }}</dd>
 
+                                                @if ($visit->zone)
+                                                    <dt class="col-5 text-muted fw-normal">{{ __('admin.zone_label') }}</dt>
+                                                    <dd class="col-7 mb-1">{{ $visit->zone }}</dd>
+                                                @endif
+
                                                 <dt class="col-5 text-muted fw-normal">{{ __('dashboard.table_status') }}</dt>
                                                 <dd class="col-7 mb-1">
                                                     @if ($visit->is_within_allowed_distance)
@@ -183,7 +188,11 @@
                                             @if ($visit->latitude && $visit->longitude)
                                                 @php
                                                     $mapsUrl = 'https://www.google.com/maps/dir/?api=1&destination='.$visit->latitude.','.$visit->longitude;
-                                                    $shareText = __('admin.share_visit_location_text', ['shop' => $visit->shop?->name, 'date' => $visit->visited_at?->format('d/m/Y H:i')]).' '.$mapsUrl;
+                                                    $shareText = __('admin.share_visit_location_text', ['shop' => $visit->shop?->name, 'date' => $visit->visited_at?->format('d/m/Y H:i')]);
+                                                    if ($visit->zone) {
+                                                        $shareText .= ' ('.__('admin.zone_label').': '.$visit->zone.')';
+                                                    }
+                                                    $shareText .= ' '.$mapsUrl;
                                                 @endphp
                                                 <a href="https://wa.me/?text={{ urlencode($shareText) }}" target="_blank" rel="noopener" class="btn btn-success">
                                                     <i class="bi bi-whatsapp"></i> {{ __('admin.share_whatsapp') }}

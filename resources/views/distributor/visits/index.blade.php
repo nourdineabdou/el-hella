@@ -48,6 +48,9 @@
                         <div>
                             <div class="fw-semibold">{{ $visit->shop?->name }}</div>
                             <div class="text-muted small">{{ $visit->visited_at?->format('d/m/Y H:i') }}</div>
+                            @if ($visit->zone)
+                                <div class="text-muted small"><i class="bi bi-geo-alt"></i> {{ $visit->zone }}</div>
+                            @endif
                         </div>
                         @if ($visit->visit_type === 'distribution')
                             <span class="badge bg-success-subtle text-success">{{ __('dashboard.visit_type_sale') }}</span>
@@ -89,6 +92,11 @@
 
                                     <dt class="col-5 text-muted fw-normal">{{ __('dashboard.table_distance') }}</dt>
                                     <dd class="col-7 mb-1">{{ $visit->formatted_distance ?? '—' }}</dd>
+
+                                    @if ($visit->zone)
+                                        <dt class="col-5 text-muted fw-normal">{{ __('admin.zone_label') }}</dt>
+                                        <dd class="col-7 mb-1">{{ $visit->zone }}</dd>
+                                    @endif
 
                                     <dt class="col-5 text-muted fw-normal">{{ __('dashboard.table_status') }}</dt>
                                     <dd class="col-7 mb-1">

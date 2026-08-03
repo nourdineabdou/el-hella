@@ -12,4 +12,6 @@ return [
     'distributors' => 'الموزعون',
     'goals' => 'الأهداف',
     'products' => 'المنتجات',
+    'products_sold' => 'المنتجات المباعة',
+    'gps_alerts' => 'تنبيهات GPS',
 ];

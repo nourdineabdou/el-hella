@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Distributor;
 use App\Http\Controllers\Controller;
 use App\Models\Distribution;
 use App\Models\DistributionItem;
+use App\Models\GpsAlert;
 use App\Models\Product;
 use App\Models\Shop;
 use App\Models\Visit;
+use App\Services\ZoneResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -26,6 +28,10 @@ class ShopController extends Controller
      * wildly inaccurate (or spoofed) reading can't bypass the check entirely.
      */
     private const MAX_ACCURACY_BONUS_METERS = 50;
+
+    public function __construct(private readonly ZoneResolver $zoneResolver)
+    {
+    }
 
     public function index()
     {
@@ -202,12 +208,7 @@ class ShopController extends Controller
             $request->longitude,
         );
 
-        if ($this->exceedsAllowedDistance($distance, $request->input('gps_accuracy'))) {
-            return response()->json([
-                'message' => 'Vous êtes trop loin de la boutique pour valider cette vente.',
-                'distance' => $distance,
-            ], 422);
-        }
+        $isWithinRange = ! $this->exceedsAllowedDistance($distance, $request->input('gps_accuracy'));
 
         $user = $request->user();
         $distributor = $user->distributor;
@@ -216,18 +217,32 @@ class ShopController extends Controller
             return response()->json(['message' => 'Distributeur non trouvé.'], 403);
         }
 
-        DB::transaction(function () use ($request, $shop, $distributor, $distance) {
+        $zone = $this->zoneResolver->resolve((float) $request->latitude, (float) $request->longitude);
+
+        DB::transaction(function () use ($request, $shop, $distributor, $distance, $zone, $isWithinRange) {
             $visit = Visit::create([
                 'distributor_id' => $distributor->id,
                 'shop_id' => $shop->id,
                 'visit_type' => 'distribution',
                 'latitude' => $request->latitude,
                 'longitude' => $request->longitude,
+                'zone' => $zone,
                 'gps_accuracy' => $request->input('gps_accuracy'),
                 'distance_from_shop' => $distance,
-                'is_within_allowed_distance' => true,
+                'is_within_allowed_distance' => $isWithinRange,
                 'visited_at' => now(),
             ]);
+
+            if (! $isWithinRange) {
+                GpsAlert::create([
+                    'visit_id' => $visit->id,
+                    'distributor_id' => $distributor->id,
+                    'shop_id' => $shop->id,
+                    'distance' => $distance,
+                    'allowed_distance' => self::MAX_DISTANCE_METERS,
+                    'status' => 'pending',
+                ]);
+            }
 
             $totalQuantity = 0;
             $distribution = Distribution::create([
@@ -268,7 +283,10 @@ class ShopController extends Controller
             ]);
         });
 
-        return response()->json(['message' => 'Vente enregistrée avec succès.']);
+        return response()->json([
+            'message' => 'Vente enregistrée avec succès.',
+            'gps_alert' => ! $isWithinRange,
+        ]);
     }
 
     public function visit(Request $request, Shop $shop)
@@ -285,12 +303,7 @@ class ShopController extends Controller
             $request->longitude,
         );
 
-        if ($this->exceedsAllowedDistance($distance, $request->input('gps_accuracy'))) {
-            return response()->json([
-                'message' => 'Vous êtes trop loin de la boutique pour valider la visite.',
-                'distance' => $distance,
-            ], 422);
-        }
+        $isWithinRange = ! $this->exceedsAllowedDistance($distance, $request->input('gps_accuracy'));
 
         $user = $request->user();
         $distributor = $user->distributor;
@@ -299,17 +312,29 @@ class ShopController extends Controller
             return response()->json(['message' => 'Distributeur non trouvé.'], 403);
         }
 
-        Visit::create([
+        $visit = Visit::create([
             'distributor_id' => $distributor->id,
             'shop_id' => $shop->id,
             'visit_type' => 'without_distribution',
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
+            'zone' => $this->zoneResolver->resolve((float) $request->latitude, (float) $request->longitude),
             'gps_accuracy' => $request->input('gps_accuracy'),
             'distance_from_shop' => $distance,
-            'is_within_allowed_distance' => true,
+            'is_within_allowed_distance' => $isWithinRange,
             'visited_at' => now(),
         ]);
+
+        if (! $isWithinRange) {
+            GpsAlert::create([
+                'visit_id' => $visit->id,
+                'distributor_id' => $distributor->id,
+                'shop_id' => $shop->id,
+                'distance' => $distance,
+                'allowed_distance' => self::MAX_DISTANCE_METERS,
+                'status' => 'pending',
+            ]);
+        }
 
         $distributor->update([
             'last_latitude' => $request->latitude,
@@ -317,7 +342,10 @@ class ShopController extends Controller
             'last_location_at' => now(),
         ]);
 
-        return response()->json(['message' => 'Visite enregistrée.']);
+        return response()->json([
+            'message' => 'Visite enregistrée.',
+            'gps_alert' => ! $isWithinRange,
+        ]);
     }
 
     /**

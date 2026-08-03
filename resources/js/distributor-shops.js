@@ -78,6 +78,12 @@ function formatDistance(distance) {
     return `${distance.toFixed(0)} ${getTranslation('distanceUnit', 'm')}`;
 }
 
+function formatOutOfRangeWarning(distance, maxDistance) {
+    return getTranslation('outOfRangeWarning', 'You are :distance from the shop (allowed limit: :max).')
+        .replace(':distance', formatDistance(distance))
+        .replace(':max', formatDistance(maxDistance));
+}
+
 function handleSearchInput() {
     const searchField = document.querySelector('#shop-search-input');
     const resultContainer = document.querySelector('#shop-search-results');
@@ -394,18 +400,19 @@ function handleShopShow() {
             currentPosition.longitude,
         );
 
-        if (!isWithinAllowedDistance(distance, currentPosition.accuracy, maxDistance)) {
-            setActionCardsLoading(false);
-            Swal.fire({ icon: 'error', title: getTranslation('tooFarValidate', 'Too far to validate'), text: getTranslation('tooFarVisit', 'You must be within the allowed distance of the shop to validate the visit.') });
-            return;
+        const isOutOfRange = !isWithinAllowedDistance(distance, currentPosition.accuracy, maxDistance);
+
+        let confirmText = getTranslation('visitText', 'Confirm if the merchant is not buying.');
+        if (isOutOfRange) {
+            confirmText = formatOutOfRangeWarning(distance, maxDistance) + ' ' + confirmText;
         }
 
         const result = await Swal.fire({
-            icon: 'question',
+            icon: isOutOfRange ? 'warning' : 'question',
             title: getTranslation('visitTitle', 'Register visit'),
-            text: getTranslation('visitText', 'Confirm if the merchant is not buying.'),
+            text: confirmText,
             showCancelButton: true,
-            confirmButtonText: getTranslation('validate', 'Validate'),
+            confirmButtonText: getTranslation(isOutOfRange ? 'registerAnyway' : 'validate', isOutOfRange ? 'Register anyway' : 'Validate'),
             cancelButtonText: getTranslation('cancel', 'Cancel'),
         });
 
@@ -415,7 +422,7 @@ function handleShopShow() {
         }
 
         try {
-            await $.ajax({
+            const response = await $.ajax({
                 url: visitForm.action,
                 method: 'POST',
                 data: {
@@ -426,7 +433,13 @@ function handleShopShow() {
                 },
             });
 
-            await Swal.fire({ icon: 'success', title: getTranslation('visitSaved', 'Visit saved.'), showConfirmButton: false, timer: 1500 });
+            const savedOutOfRange = isOutOfRange || response.gps_alert;
+            await Swal.fire({
+                icon: savedOutOfRange ? 'warning' : 'success',
+                title: getTranslation(savedOutOfRange ? 'visitSavedGpsAlert' : 'visitSaved', 'Visit saved.'),
+                showConfirmButton: false,
+                timer: 2000,
+            });
             window.location.reload();
         } catch (error) {
             const message = error.responseJSON?.message || getTranslation('saleError', 'Unable to save the sale.');
@@ -611,11 +624,23 @@ function handleShopShow() {
             currentPosition.longitude,
         );
 
-        if (!isWithinAllowedDistance(distance, currentPosition.accuracy, maxDistance)) {
-            setActionCardsLoading(false);
-            setSubmitLoading(saleForm, false);
-            Swal.fire({ icon: 'error', title: getTranslation('tooFarValidate', 'Too far to validate'), text: getTranslation('saleValidationTooFar', 'You must be within the allowed distance of the shop to validate the sale.') });
-            return;
+        const isOutOfRange = !isWithinAllowedDistance(distance, currentPosition.accuracy, maxDistance);
+
+        if (isOutOfRange) {
+            const result = await Swal.fire({
+                icon: 'warning',
+                title: getTranslation('outOfRangeTitle', 'Too far from the shop'),
+                text: formatOutOfRangeWarning(distance, maxDistance),
+                showCancelButton: true,
+                confirmButtonText: getTranslation('registerAnyway', 'Register anyway'),
+                cancelButtonText: getTranslation('cancel', 'Cancel'),
+            });
+
+            if (!result.isConfirmed) {
+                setActionCardsLoading(false);
+                setSubmitLoading(saleForm, false);
+                return;
+            }
         }
 
         if (selectedProducts.size === 0) {
@@ -640,7 +665,7 @@ function handleShopShow() {
         }
 
         try {
-            await $.ajax({
+            const response = await $.ajax({
                 url: saleForm.action,
                 method: 'POST',
                 data: {
@@ -652,7 +677,13 @@ function handleShopShow() {
                 },
             });
 
-            await Swal.fire({ icon: 'success', title: getTranslation('saleSaved', 'Sale saved.'), showConfirmButton: false, timer: 1200 });
+            const savedOutOfRange = isOutOfRange || response.gps_alert;
+            await Swal.fire({
+                icon: savedOutOfRange ? 'warning' : 'success',
+                title: getTranslation(savedOutOfRange ? 'saleSavedGpsAlert' : 'saleSaved', 'Sale saved.'),
+                showConfirmButton: false,
+                timer: 2000,
+            });
             window.location.reload();
         } catch (error) {
             setActionCardsLoading(false);

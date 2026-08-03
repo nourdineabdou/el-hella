@@ -4,7 +4,7 @@
     <div class="card border-0 shadow-sm mb-3">
         <div class="card-body">
             <form method="GET" action="{{ route('admin.visits.index') }}" class="row g-3 align-items-end">
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-2">
                     <label class="form-label small fw-semibold">{{ __('admin.filter_date') }}</label>
                     <input type="date" name="date" value="{{ request('date') }}" class="form-control">
                 </div>
@@ -16,7 +16,7 @@
                     <label class="form-label small fw-semibold">{{ __('admin.filter_date_to') }}</label>
                     <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control" {{ request('date') ? 'disabled' : '' }}>
                 </div>
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-2">
                     <label class="form-label small fw-semibold">{{ __('admin.filter_distributor') }}</label>
                     <select name="distributor_id" class="form-select">
                         <option value="">{{ __('admin.all_distributors') }}</option>
@@ -27,10 +27,26 @@
                         @endforeach
                     </select>
                 </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-semibold">{{ __('admin.filter_product') }}</label>
+                    <select name="product_id" class="form-select">
+                        <option value="">{{ __('admin.all_products') }}</option>
+                        @foreach ($products as $product)
+                            <option value="{{ $product->id }}" {{ (string) request('product_id') === (string) $product->id ? 'selected' : '' }}>
+                                {{ app()->getLocale() === 'fr' && $product->name_fr ? $product->name_fr : $product->name_ar }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
                 <div class="col-12 col-md-2 d-flex gap-2">
                     <button type="submit" class="btn btn-primary flex-fill">{{ __('admin.filter_apply') }}</button>
                     <a href="{{ route('admin.visits.index') }}" class="btn btn-outline-secondary" title="{{ __('admin.filter_reset') }}">
                         <i class="bi bi-x-lg"></i>
+                    </a>
+                </div>
+                <div class="col-12">
+                    <a href="{{ route('admin.visits.export', request()->query()) }}" class="btn btn-outline-success">
+                        <i class="bi bi-file-earmark-excel"></i> {{ __('admin.export_excel') }}
                     </a>
                 </div>
             </form>
@@ -50,6 +66,7 @@
                         <thead>
                             <tr>
                                 <th>{{ __('dashboard.table_shop') }}</th>
+                                <th>{{ __('admin.zone_label') }}</th>
                                 <th>{{ __('dashboard.table_distributor') }}</th>
                                 <th>{{ __('dashboard.table_type') }}</th>
                                 <th>{{ __('admin.table_quantity') }}</th>
@@ -63,6 +80,7 @@
                             @foreach ($visits as $visit)
                                 <tr>
                                     <td class="fw-semibold" data-label="{{ __('dashboard.table_shop') }}">{{ $visit->shop?->name }}</td>
+                                    <td data-label="{{ __('admin.zone_label') }}">{{ $visit->zone ?? '—' }}</td>
                                     <td data-label="{{ __('dashboard.table_distributor') }}">{{ $visit->distributor?->user?->name }}</td>
                                     <td data-label="{{ __('dashboard.table_type') }}">
                                         @if ($visit->visit_type === 'distribution')
@@ -101,6 +119,9 @@
                                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('Close') }}"></button>
                                                         </div>
                                                         <div class="modal-body">
+                                                            @if ($visit->zone)
+                                                                <p class="text-muted small mb-3"><i class="bi bi-geo-alt"></i> {{ __('admin.zone_label') }} : {{ $visit->zone }}</p>
+                                                            @endif
                                                             @if ($visit->distribution->items->isEmpty())
                                                                 <p class="text-muted text-center mb-0">{{ __('admin.no_items') }}</p>
                                                             @else
@@ -128,7 +149,11 @@
                                                             @if ($visit->latitude && $visit->longitude)
                                                                 @php
                                                                     $mapsUrl = 'https://www.google.com/maps/dir/?api=1&destination='.$visit->latitude.','.$visit->longitude;
-                                                                    $shareText = __('admin.share_visit_location_text', ['shop' => $visit->shop?->name, 'date' => $visit->visited_at?->format('d/m/Y H:i')]).' '.$mapsUrl;
+                                                                    $shareText = __('admin.share_visit_location_text', ['shop' => $visit->shop?->name, 'date' => $visit->visited_at?->format('d/m/Y H:i')]);
+                                                                    if ($visit->zone) {
+                                                                        $shareText .= ' ('.__('admin.zone_label').': '.$visit->zone.')';
+                                                                    }
+                                                                    $shareText .= ' '.$mapsUrl;
                                                                 @endphp
                                                                 <a href="https://wa.me/?text={{ urlencode($shareText) }}" target="_blank" rel="noopener" class="btn btn-success">
                                                                     <i class="bi bi-whatsapp"></i> {{ __('admin.share_whatsapp') }}

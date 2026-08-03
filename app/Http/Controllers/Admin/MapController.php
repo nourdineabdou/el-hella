@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Distributor;
 use App\Models\Shop;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
+use App\Services\ZoneResolver;
 use Illuminate\View\View;
 
 class MapController extends Controller
 {
+    public function __construct(private readonly ZoneResolver $zoneResolver)
+    {
+    }
+
     public function index(): View
     {
         $shops = Shop::query()
@@ -40,7 +43,7 @@ class MapController extends Controller
                 'name' => $distributor->user?->name,
                 'phone' => $distributor->phone,
                 'last_shop_name' => $distributor->visits->first()?->shop?->name,
-                'zone' => $this->resolveZone((float) $distributor->last_latitude, (float) $distributor->last_longitude),
+                'zone' => $this->zoneResolver->resolve((float) $distributor->last_latitude, (float) $distributor->last_longitude),
                 'latitude' => (float) $distributor->last_latitude,
                 'longitude' => (float) $distributor->last_longitude,
                 'last_location_at' => $distributor->last_location_at?->format('d/m/Y H:i'),
@@ -50,47 +53,5 @@ class MapController extends Controller
             'shops' => $shops,
             'distributors' => $distributors,
         ]);
-    }
-
-    /**
-     * Reverse-geocode a GPS point into a human-readable neighbourhood name
-     * via the free OpenStreetMap Nominatim API. Results are cached for a
-     * month since a given point's neighbourhood name never changes, and the
-     * request fails silently (returns null) so the map keeps working if the
-     * service is unreachable.
-     */
-    private function resolveZone(float $latitude, float $longitude): ?string
-    {
-        $cacheKey = sprintf('geocode:zone:%s:%s:%s', app()->getLocale(), round($latitude, 4), round($longitude, 4));
-
-        return Cache::remember($cacheKey, now()->addDays(30), function () use ($latitude, $longitude) {
-            try {
-                $response = Http::withHeaders([
-                    'User-Agent' => 'ElHellaApp/1.0',
-                ])->timeout(3)->get('https://nominatim.openstreetmap.org/reverse', [
-                    'lat' => $latitude,
-                    'lon' => $longitude,
-                    'format' => 'json',
-                    'zoom' => 14,
-                    'accept-language' => app()->getLocale(),
-                ]);
-
-                if (! $response->successful()) {
-                    return null;
-                }
-
-                $address = $response->json('address', []);
-
-                return $address['suburb']
-                    ?? $address['neighbourhood']
-                    ?? $address['quarter']
-                    ?? $address['city_district']
-                    ?? $address['town']
-                    ?? $address['city']
-                    ?? null;
-            } catch (\Throwable) {
-                return null;
-            }
-        });
     }
 }

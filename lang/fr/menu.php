@@ -12,4 +12,6 @@ return [
     'distributors' => 'Distributeurs',
     'goals' => 'Objectifs',
     'products' => 'Produits',
+    'products_sold' => 'Produits vendus',
+    'gps_alerts' => 'Alertes GPS',
 ];

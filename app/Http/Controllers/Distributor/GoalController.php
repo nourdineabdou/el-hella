@@ -30,6 +30,10 @@ class GoalController extends Controller
         $goals->getCollection()->transform(function (DistributorGoal $goal) use ($distributor) {
             $actualVisits = Visit::where('distributor_id', $distributor?->id)
                 ->whereDate('visited_at', $goal->goal_date)
+                ->where(function ($query) {
+                    $query->whereDoesntHave('gpsAlert')
+                        ->orWhereHas('gpsAlert', fn ($alertQuery) => $alertQuery->where('status', 'justified'));
+                })
                 ->count();
 
             $goal->actual_visits = $actualVisits;

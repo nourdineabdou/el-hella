@@ -3,9 +3,11 @@
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DistributorController as AdminDistributorController;
 use App\Http\Controllers\Admin\GoalController as AdminGoalController;
+use App\Http\Controllers\Admin\GpsAlertController as AdminGpsAlertController;
 use App\Http\Controllers\Admin\MapController as AdminMapController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\ShopController as AdminShopController;
+use App\Http\Controllers\Admin\SoldProductController as AdminSoldProductController;
 use App\Http\Controllers\Admin\VisitController as AdminVisitController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Distributor\DashboardController as DistributorDashboardController;
@@ -31,8 +33,11 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::get('/visits', [AdminVisitController::class, 'index'])->name('visits.index');
+        Route::get('/visits/export', [AdminVisitController::class, 'export'])->name('visits.export');
         Route::get('/shops', [AdminShopController::class, 'index'])->name('shops.index');
         Route::get('/map', [AdminMapController::class, 'index'])->name('map.index');
+        Route::get('/gps-alerts', [AdminGpsAlertController::class, 'index'])->name('gps-alerts.index');
+        Route::post('/gps-alerts/{gpsAlert}/review', [AdminGpsAlertController::class, 'review'])->name('gps-alerts.review');
         Route::get('/goals', [AdminGoalController::class, 'index'])->name('goals.index');
         Route::post('/goals', [AdminGoalController::class, 'store'])->name('goals.store');
         Route::get('/distributors', [AdminDistributorController::class, 'index'])->name('distributors.index');
@@ -42,6 +47,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/products', [AdminProductController::class, 'index'])->name('products.index');
         Route::post('/products', [AdminProductController::class, 'store'])->name('products.store');
         Route::put('/products/{product}', [AdminProductController::class, 'update'])->name('products.update');
+        Route::get('/products-sold', [AdminSoldProductController::class, 'index'])->name('products-sold.index');
+        Route::get('/products-sold/export', [AdminSoldProductController::class, 'export'])->name('products-sold.export');
     });
 
     Route::middleware('role:distributor')->prefix('distributor')->name('distributor.')->group(function () {
