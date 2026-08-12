@@ -13,7 +13,9 @@ class ShopController extends Controller
     {
         $query = Shop::query()
             ->withCount('visits')
-            ->withSum('distributions as total_quantity', 'total_quantity');
+            ->withSum(['distributions as total_quantity' => function ($query) {
+                $query->whereNull('cancelled_at');
+            }], 'total_quantity');
 
         if ($request->filled('q')) {
             $search = $request->input('q');
@@ -26,7 +28,9 @@ class ShopController extends Controller
 
         $shops = $query->orderBy('name')->paginate(20)->withQueryString();
 
-        $topShops = Shop::withSum('distributions as total_quantity', 'total_quantity')
+        $topShops = Shop::withSum(['distributions as total_quantity' => function ($query) {
+                $query->whereNull('cancelled_at');
+            }], 'total_quantity')
             ->having('total_quantity', '>', 0)
             ->orderByDesc('total_quantity')
             ->limit(5)

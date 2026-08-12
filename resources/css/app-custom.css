@@ -162,7 +162,7 @@ a {
     --bs-pagination-focus-box-shadow: 0 0 0 .25rem rgba(245, 185, 14, .3);
 }
 
-/* Tables */
+/* Tables — visible row/column grid across every table in the app */
 .eh-clickable-row {
     cursor: pointer;
 }
@@ -177,12 +177,44 @@ a {
     letter-spacing: .04em;
     color: #6c7693;
     background: #f8f9fc;
-    border-bottom: 1px solid #e6e9f2;
+    border-bottom: 2px solid #dfe3ee;
     font-weight: 700;
+    white-space: nowrap;
 }
 
 .table > :not(caption) > * > * {
     padding-block: .85rem;
+}
+
+.table td,
+.table th {
+    border-bottom: 1px solid #e9ebf3;
+    border-inline-end: 1px solid #eef0f6;
+}
+
+.table thead th:last-child,
+.table tbody td:last-child {
+    border-inline-end: 0;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.table tbody tr:hover td {
+    background-color: #f8f9fc;
+}
+
+/* Table sits in its own bordered, rounded box (works whether or not the
+   markup wraps it in .table-responsive). overflow-y is what clips the
+   rounded corners here — overflow-x stays "auto" so wide tables can still
+   scroll horizontally on small screens. */
+.table-responsive,
+.card-body > .table {
+    border: 1px solid #e6e9f2;
+    border-radius: var(--eh-radius);
+    overflow-x: auto;
+    overflow-y: hidden;
 }
 
 /* ==========================================================================
@@ -703,6 +735,10 @@ body.eh-keyboard-open .eh-bottom-nav {
     .table-mobile-cards td {
         display: block;
         width: 100%;
+    }
+
+    .table-responsive > .table-mobile-cards {
+        padding: .75rem;
     }
 
     .table-mobile-cards tr {

@@ -31,10 +31,12 @@ class DashboardController extends Controller
 
         $todayDistributions = Distribution::where('distributor_id', $distributor->id)
             ->whereDate('distributed_at', today())
+            ->whereNull('cancelled_at')
             ->count();
 
         $todayQuantity = (float) Distribution::where('distributor_id', $distributor->id)
             ->whereDate('distributed_at', today())
+            ->whereNull('cancelled_at')
             ->sum('total_quantity');
 
         $goal = DistributorGoal::where('distributor_id', $distributor->id)

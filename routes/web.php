@@ -34,6 +34,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::get('/visits', [AdminVisitController::class, 'index'])->name('visits.index');
         Route::get('/visits/export', [AdminVisitController::class, 'export'])->name('visits.export');
+        Route::post('/visits/{visit}/cancel-sale', [AdminVisitController::class, 'cancelSale'])->name('visits.cancel-sale');
         Route::get('/shops', [AdminShopController::class, 'index'])->name('shops.index');
         Route::get('/map', [AdminMapController::class, 'index'])->name('map.index');
         Route::get('/gps-alerts', [AdminGpsAlertController::class, 'index'])->name('gps-alerts.index');

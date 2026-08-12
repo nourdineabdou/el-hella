@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Distributor;
 use App\Models\Product;
 use App\Models\Visit;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -22,6 +23,7 @@ class VisitController extends Controller
             'date_to' => ['nullable', 'date'],
             'distributor_id' => ['nullable', 'exists:distributors,id'],
             'product_id' => ['nullable', 'exists:products,id'],
+            'sale_status' => ['nullable', 'in:sale,cancelled,visit_only'],
         ]);
 
         $visits = $this->filteredQuery($request)
@@ -47,6 +49,7 @@ class VisitController extends Controller
             'date_to' => ['nullable', 'date'],
             'distributor_id' => ['nullable', 'exists:distributors,id'],
             'product_id' => ['nullable', 'exists:products,id'],
+            'sale_status' => ['nullable', 'in:sale,cancelled,visit_only'],
         ]);
 
         $visits = $this->filteredQuery($request)->latest('visited_at')->get();
@@ -57,9 +60,17 @@ class VisitController extends Controller
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setRightToLeft(app()->getLocale() === 'ar');
 
-        $columns = ['Boutique', 'Zone', 'Distributeur', 'Type', 'Produits vendus', 'Distance (m)', 'Date', 'Statut GPS'];
+        $columns = [
+            __('dashboard.table_shop'),
+            __('admin.zone_label'),
+            __('dashboard.table_distributor'),
+            __('dashboard.table_type'),
+            __('admin.sold_products_title'),
+            __('dashboard.table_date'),
+            __('dashboard.table_status'),
+        ];
         $sheet->fromArray($columns, null, 'A1');
-        $sheet->getStyle('A1:H1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:G1')->getFont()->setBold(true);
 
         $row = 2;
 
@@ -74,21 +85,28 @@ class VisitController extends Controller
                 })->implode(', ')
                 : '';
 
+            $type = __('dashboard.visit_type_visit_only');
+
+            if ($visit->visit_type === 'distribution') {
+                $type = $visit->distribution?->cancelled_at
+                    ? __('admin.sale_cancelled_badge')
+                    : __('dashboard.visit_type_sale');
+            }
+
             $sheet->fromArray([
                 $visit->shop?->name,
                 $visit->zone,
                 $visit->distributor?->user?->name,
-                $visit->visit_type === 'distribution' ? 'Vente' : 'Visite simple',
+                $type,
                 $products,
-                $visit->distance_from_shop !== null ? (float) $visit->distance_from_shop : null,
                 $visit->visited_at?->format('d/m/Y H:i'),
-                $visit->is_within_allowed_distance ? 'OK' : 'Alerte',
+                $visit->is_within_allowed_distance ? __('dashboard.gps_ok') : __('dashboard.gps_alert'),
             ], null, 'A'.$row);
 
             $row++;
         }
 
-        foreach (range('A', 'H') as $column) {
+        foreach (range('A', 'G') as $column) {
             $sheet->getColumnDimension($column)->setAutoSize(true);
         }
 
@@ -105,9 +123,25 @@ class VisitController extends Controller
         return response()->streamDownload($callback, $filename, $headers);
     }
 
+    public function cancelSale(Visit $visit): RedirectResponse
+    {
+        $distribution = $visit->distribution;
+
+        if (! $distribution || $distribution->cancelled_at) {
+            return back();
+        }
+
+        $distribution->update([
+            'cancelled_at' => now(),
+            'cancelled_by' => auth()->id(),
+        ]);
+
+        return back()->with('success', __('admin.sale_cancelled'));
+    }
+
     private function filteredQuery(Request $request)
     {
-        $query = Visit::with(['shop', 'distributor.user', 'distribution.items.product']);
+        $query = Visit::with(['shop', 'distributor.user', 'distribution.items.product', 'distribution.cancelledBy']);
 
         if ($request->filled('date')) {
             $query->whereDate('visited_at', $request->input('date'));
@@ -131,6 +165,15 @@ class VisitController extends Controller
                 $itemQuery->where('product_id', $productId);
             });
         }
+
+        match ($request->input('sale_status')) {
+            'sale' => $query->where('visit_type', 'distribution')
+                ->whereHas('distribution', fn ($q) => $q->whereNull('cancelled_at')),
+            'cancelled' => $query->where('visit_type', 'distribution')
+                ->whereHas('distribution', fn ($q) => $q->whereNotNull('cancelled_at')),
+            'visit_only' => $query->where('visit_type', '!=', 'distribution'),
+            default => null,
+        };
 
         return $query;
     }

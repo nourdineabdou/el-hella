@@ -38,6 +38,15 @@
                         @endforeach
                     </select>
                 </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-semibold">{{ __('admin.filter_sale_status') }}</label>
+                    <select name="sale_status" class="form-select">
+                        <option value="">{{ __('admin.sale_status_all') }}</option>
+                        <option value="sale" {{ request('sale_status') === 'sale' ? 'selected' : '' }}>{{ __('admin.sale_status_sale') }}</option>
+                        <option value="cancelled" {{ request('sale_status') === 'cancelled' ? 'selected' : '' }}>{{ __('admin.sale_status_cancelled') }}</option>
+                        <option value="visit_only" {{ request('sale_status') === 'visit_only' ? 'selected' : '' }}>{{ __('admin.sale_status_visit_only') }}</option>
+                    </select>
+                </div>
                 <div class="col-12 col-md-2 d-flex gap-2">
                     <button type="submit" class="btn btn-primary flex-fill">{{ __('admin.filter_apply') }}</button>
                     <a href="{{ route('admin.visits.index') }}" class="btn btn-outline-secondary" title="{{ __('admin.filter_reset') }}">
@@ -70,7 +79,6 @@
                                 <th>{{ __('dashboard.table_distributor') }}</th>
                                 <th>{{ __('dashboard.table_type') }}</th>
                                 <th>{{ __('admin.table_quantity') }}</th>
-                                <th>{{ __('dashboard.table_distance') }}</th>
                                 <th>{{ __('dashboard.table_date') }}</th>
                                 <th>{{ __('dashboard.table_status') }}</th>
                                 <th></th>
@@ -84,19 +92,22 @@
                                     <td data-label="{{ __('dashboard.table_distributor') }}">{{ $visit->distributor?->user?->name }}</td>
                                     <td data-label="{{ __('dashboard.table_type') }}">
                                         @if ($visit->visit_type === 'distribution')
-                                            <span class="badge bg-success-subtle text-success">{{ __('dashboard.visit_type_sale') }}</span>
+                                            @if ($visit->distribution?->cancelled_at)
+                                                <span class="badge bg-danger-subtle text-danger">{{ __('admin.sale_cancelled_badge') }}</span>
+                                            @else
+                                                <span class="badge bg-success-subtle text-success">{{ __('dashboard.visit_type_sale') }}</span>
+                                            @endif
                                         @else
                                             <span class="badge bg-secondary-subtle text-secondary">{{ __('dashboard.visit_type_visit_only') }}</span>
                                         @endif
                                     </td>
-                                    <td data-label="{{ __('admin.table_quantity') }}">
+                                    <td data-label="{{ __('admin.table_quantity') }}" class="{{ $visit->distribution?->cancelled_at ? 'text-muted text-decoration-line-through' : '' }}">
                                         @if ($visit->distribution)
                                             {{ rtrim(rtrim(number_format((float) $visit->distribution->total_quantity, 3), '0'), '.') }}
                                         @else
                                             —
                                         @endif
                                     </td>
-                                    <td data-label="{{ __('dashboard.table_distance') }}">{{ $visit->formatted_distance ?? '—' }}</td>
                                     <td class="text-muted small" data-label="{{ __('dashboard.table_date') }}">{{ $visit->visited_at?->format('d/m/Y H:i') }}</td>
                                     <td data-label="{{ __('dashboard.table_status') }}">
                                         @if ($visit->is_within_allowed_distance)
@@ -107,9 +118,24 @@
                                     </td>
                                     <td class="text-end">
                                         @if ($visit->distribution)
-                                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#visit-details-{{ $visit->id }}">
-                                                {{ __('admin.table_details') }}
-                                            </button>
+                                            <div class="d-flex gap-2 justify-content-end">
+                                                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#visit-details-{{ $visit->id }}">
+                                                    {{ __('admin.table_details') }}
+                                                </button>
+
+                                                @unless ($visit->distribution->cancelled_at)
+                                                    <form method="POST" action="{{ route('admin.visits.cancel-sale', $visit) }}"
+                                                          data-confirm="{{ __('admin.cancel_sale_confirm') }}"
+                                                          data-confirm-title="{{ __('admin.cancel_sale_confirm_title') }}"
+                                                          data-confirm-yes="{{ __('Validate') }}"
+                                                          data-confirm-no="{{ __('Cancel') }}">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                            {{ __('admin.cancel_sale_button') }}
+                                                        </button>
+                                                    </form>
+                                                @endunless
+                                            </div>
 
                                             <div class="modal fade" id="visit-details-{{ $visit->id }}" tabindex="-1" aria-hidden="true">
                                                 <div class="modal-dialog modal-dialog-centered">
@@ -119,6 +145,12 @@
                                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('Close') }}"></button>
                                                         </div>
                                                         <div class="modal-body">
+                                                            @if ($visit->distribution->cancelled_at)
+                                                                <p class="text-danger small mb-3">
+                                                                    <i class="bi bi-x-circle"></i>
+                                                                    {{ __('admin.cancelled_by_at', ['name' => $visit->distribution->cancelledBy?->name ?? '—', 'date' => $visit->distribution->cancelled_at->format('d/m/Y H:i')]) }}
+                                                                </p>
+                                                            @endif
                                                             @if ($visit->zone)
                                                                 <p class="text-muted small mb-3"><i class="bi bi-geo-alt"></i> {{ __('admin.zone_label') }} : {{ $visit->zone }}</p>
                                                             @endif

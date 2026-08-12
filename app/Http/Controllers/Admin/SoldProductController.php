@@ -66,7 +66,15 @@ class SoldProductController extends Controller
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setRightToLeft(app()->getLocale() === 'ar');
 
-        $columns = ['Produit', 'Quantité', 'Unité', 'Distributeur', 'Boutique', 'Zone', 'Date de vente'];
+        $columns = [
+            __('admin.table_product'),
+            __('admin.table_quantity'),
+            __('admin.table_unit'),
+            __('dashboard.table_distributor'),
+            __('dashboard.table_shop'),
+            __('admin.zone_label'),
+            __('dashboard.table_date'),
+        ];
         $sheet->fromArray($columns, null, 'A1');
         $sheet->getStyle('A1:G1')->getFont()->setBold(true);
 
@@ -141,6 +149,7 @@ class SoldProductController extends Controller
         $query = DistributionItem::query()
             ->with(['product', 'distribution.distributor.user', 'distribution.shop'])
             ->join('distributions', 'distribution_items.distribution_id', '=', 'distributions.id')
+            ->whereNull('distributions.cancelled_at')
             ->select('distribution_items.*');
 
         if ($request->filled('date')) {

@@ -93,7 +93,11 @@
                                             <td>{{ $visit->distributor?->user?->name }}</td>
                                             <td>
                                                 @if ($visit->visit_type === 'distribution')
-                                                    <span class="badge bg-success-subtle text-success">{{ __('dashboard.visit_type_sale') }}</span>
+                                                    @if ($visit->distribution?->cancelled_at)
+                                                        <span class="badge bg-danger-subtle text-danger">{{ __('admin.sale_cancelled_badge') }}</span>
+                                                    @else
+                                                        <span class="badge bg-success-subtle text-success">{{ __('dashboard.visit_type_sale') }}</span>
+                                                    @endif
                                                 @else
                                                     <span class="badge bg-secondary-subtle text-secondary">{{ __('dashboard.visit_type_visit_only') }}</span>
                                                 @endif
