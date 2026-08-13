@@ -45,6 +45,10 @@ $user = auth()->user();
                 <i class="bi bi-graph-up"></i>
                 <span>{{ __('menu.products_sold') }}</span>
             </a>
+            <a href="{{ route('admin.admins.index') }}" class="nav-link {{ request()->routeIs('admin.admins.*') ? 'active' : '' }}">
+                <i class="bi bi-person-badge"></i>
+                <span>{{ __('menu.admins') }}</span>
+            </a>
         @else
             <a href="{{ route('distributor.dashboard') }}" class="nav-link {{ request()->routeIs('distributor.dashboard') ? 'active' : '' }}">
                 <i class="bi bi-speedometer2"></i>

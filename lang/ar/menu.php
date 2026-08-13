@@ -14,4 +14,5 @@ return [
     'products' => 'المنتجات',
     'products_sold' => 'المنتجات المباعة',
     'gps_alerts' => 'تنبيهات GPS',
+    'admins' => 'المسؤولون',
 ];

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DistributorController as AdminDistributorController;
 use App\Http\Controllers\Admin\GoalController as AdminGoalController;
@@ -50,6 +51,8 @@ Route::middleware('auth')->group(function () {
         Route::put('/products/{product}', [AdminProductController::class, 'update'])->name('products.update');
         Route::get('/products-sold', [AdminSoldProductController::class, 'index'])->name('products-sold.index');
         Route::get('/products-sold/export', [AdminSoldProductController::class, 'export'])->name('products-sold.export');
+        Route::get('/admins', [AdminUserController::class, 'index'])->name('admins.index');
+        Route::post('/admins', [AdminUserController::class, 'store'])->name('admins.store');
     });
 
     Route::middleware('role:distributor')->prefix('distributor')->name('distributor.')->group(function () {

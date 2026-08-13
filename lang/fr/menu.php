@@ -14,4 +14,5 @@ return [
     'products' => 'Produits',
     'products_sold' => 'Produits vendus',
     'gps_alerts' => 'Alertes GPS',
+    'admins' => 'Administrateurs',
 ];

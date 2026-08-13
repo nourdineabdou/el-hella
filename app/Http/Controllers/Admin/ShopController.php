@@ -26,7 +26,7 @@ class ShopController extends Controller
             });
         }
 
-        $shops = $query->orderBy('name')->paginate(20)->withQueryString();
+        $shops = $query->orderByDesc('id')->paginate(10)->withQueryString();
 
         $topShops = Shop::withSum(['distributions as total_quantity' => function ($query) {
                 $query->whereNull('cancelled_at');
