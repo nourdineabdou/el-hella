@@ -78,7 +78,6 @@
                                 <th>{{ __('dashboard.table_shop') }}</th>
                                 <th>{{ __('dashboard.table_type') }}</th>
                                 <th>{{ __('admin.table_quantity') }}</th>
-                                <th>{{ __('dashboard.table_distance') }}</th>
                                 <th>{{ __('dashboard.table_date') }}</th>
                                 <th>{{ __('dashboard.table_status') }}</th>
                             </tr>
@@ -101,7 +100,6 @@
                                             —
                                         @endif
                                     </td>
-                                    <td data-label="{{ __('dashboard.table_distance') }}">{{ $visit->formatted_distance ?? '—' }}</td>
                                     <td class="text-muted small" data-label="{{ __('dashboard.table_date') }}">{{ $visit->visited_at?->format('d/m/Y H:i') }}</td>
                                     <td data-label="{{ __('dashboard.table_status') }}">
                                         @if ($visit->is_within_allowed_distance)
@@ -128,9 +126,6 @@
                                     <dl class="row small mb-3">
                                         <dt class="col-5 text-muted fw-normal">{{ __('dashboard.table_date') }}</dt>
                                         <dd class="col-7 mb-1">{{ $visit->visited_at?->format('d/m/Y H:i') }}</dd>
-
-                                        <dt class="col-5 text-muted fw-normal">{{ __('dashboard.table_distance') }}</dt>
-                                        <dd class="col-7 mb-1">{{ $visit->formatted_distance ?? '—' }}</dd>
 
                                         <dt class="col-5 text-muted fw-normal">{{ __('dashboard.table_status') }}</dt>
                                         <dd class="col-7 mb-1">

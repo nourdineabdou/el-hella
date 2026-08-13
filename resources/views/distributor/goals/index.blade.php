@@ -6,11 +6,11 @@
             <form method="GET" action="{{ route('distributor.goals.index') }}" class="row g-3 align-items-end">
                 <div class="col-6 col-md-4">
                     <label class="form-label small fw-semibold">{{ __('admin.filter_date_from') }}</label>
-                    <input type="date" name="date_from" value="{{ $dateFrom }}" class="form-control">
+                    <x-date-input name="date_from" :value="$dateFrom" />
                 </div>
                 <div class="col-6 col-md-4">
                     <label class="form-label small fw-semibold">{{ __('admin.filter_date_to') }}</label>
-                    <input type="date" name="date_to" value="{{ $dateTo }}" class="form-control">
+                    <x-date-input name="date_to" :value="$dateTo" />
                 </div>
                 <div class="col-12 col-md-4 d-flex gap-2">
                     <button type="submit" class="btn btn-primary flex-fill">{{ __('admin.filter_apply') }}</button>

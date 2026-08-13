@@ -6,11 +6,11 @@
             <form method="GET" action="{{ route('distributor.visits.index') }}" class="row g-3 align-items-end">
                 <div class="col-6 col-md-3">
                     <label class="form-label small fw-semibold">{{ __('admin.filter_date_from') }}</label>
-                    <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-control">
+                    <x-date-input name="date_from" :value="request('date_from')" />
                 </div>
                 <div class="col-6 col-md-3">
                     <label class="form-label small fw-semibold">{{ __('admin.filter_date_to') }}</label>
-                    <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control">
+                    <x-date-input name="date_to" :value="request('date_to')" />
                 </div>
                 <div class="col-12 col-md-4">
                     <label class="form-label small fw-semibold">{{ __('admin.filter_shop') }}</label>
@@ -61,11 +61,10 @@
 
                     <div class="eh-visit-card-footer">
                         <div class="text-muted small">
-                            {{ $visit->formatted_distance ?? '—' }}
                             @if ($visit->is_within_allowed_distance)
-                                <span class="badge bg-success-subtle text-success ms-1">{{ __('dashboard.gps_ok') }}</span>
+                                <span class="badge bg-success-subtle text-success">{{ __('dashboard.gps_ok') }}</span>
                             @else
-                                <span class="badge bg-danger-subtle text-danger ms-1">{{ __('dashboard.gps_alert') }}</span>
+                                <span class="badge bg-danger-subtle text-danger">{{ __('dashboard.gps_alert') }}</span>
                             @endif
                         </div>
 
@@ -89,9 +88,6 @@
                                 <dl class="row small mb-3">
                                     <dt class="col-5 text-muted fw-normal">{{ __('dashboard.table_date') }}</dt>
                                     <dd class="col-7 mb-1">{{ $visit->visited_at?->format('d/m/Y H:i') }}</dd>
-
-                                    <dt class="col-5 text-muted fw-normal">{{ __('dashboard.table_distance') }}</dt>
-                                    <dd class="col-7 mb-1">{{ $visit->formatted_distance ?? '—' }}</dd>
 
                                     @if ($visit->zone)
                                         <dt class="col-5 text-muted fw-normal">{{ __('admin.zone_label') }}</dt>

@@ -6,15 +6,15 @@
             <form method="GET" action="{{ route('admin.visits.index') }}" class="row g-3 align-items-end">
                 <div class="col-6 col-md-2">
                     <label class="form-label small fw-semibold">{{ __('admin.filter_date') }}</label>
-                    <input type="date" name="date" value="{{ request('date') }}" class="form-control">
+                    <x-date-input name="date" :value="request('date')" />
                 </div>
                 <div class="col-6 col-md-2">
                     <label class="form-label small fw-semibold">{{ __('admin.filter_date_from') }}</label>
-                    <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-control" {{ request('date') ? 'disabled' : '' }}>
+                    <x-date-input name="date_from" :value="request('date_from')" :disabled="(bool) request('date')" />
                 </div>
                 <div class="col-6 col-md-2">
                     <label class="form-label small fw-semibold">{{ __('admin.filter_date_to') }}</label>
-                    <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control" {{ request('date') ? 'disabled' : '' }}>
+                    <x-date-input name="date_to" :value="request('date_to')" :disabled="(bool) request('date')" />
                 </div>
                 <div class="col-6 col-md-2">
                     <label class="form-label small fw-semibold">{{ __('admin.filter_distributor') }}</label>

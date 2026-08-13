@@ -81,7 +81,6 @@
                                         <th>{{ __('dashboard.table_shop') }}</th>
                                         <th>{{ __('dashboard.table_distributor') }}</th>
                                         <th>{{ __('dashboard.table_type') }}</th>
-                                        <th>{{ __('dashboard.table_distance') }}</th>
                                         <th>{{ __('dashboard.table_date') }}</th>
                                         <th>{{ __('dashboard.table_status') }}</th>
                                     </tr>
@@ -102,7 +101,6 @@
                                                     <span class="badge bg-secondary-subtle text-secondary">{{ __('dashboard.visit_type_visit_only') }}</span>
                                                 @endif
                                             </td>
-                                            <td>{{ $visit->formatted_distance ?? '—' }}</td>
                                             <td class="text-muted small">{{ $visit->visited_at?->format('d/m/Y H:i') }}</td>
                                             <td>
                                                 @if ($visit->is_within_allowed_distance)
@@ -132,9 +130,6 @@
 
                                                 <dt class="col-5 text-muted fw-normal">{{ __('dashboard.table_date') }}</dt>
                                                 <dd class="col-7 mb-1">{{ $visit->visited_at?->format('d/m/Y H:i') }}</dd>
-
-                                                <dt class="col-5 text-muted fw-normal">{{ __('dashboard.table_distance') }}</dt>
-                                                <dd class="col-7 mb-1">{{ $visit->formatted_distance ?? '—' }}</dd>
 
                                                 @if ($visit->zone)
                                                     <dt class="col-5 text-muted fw-normal">{{ __('admin.zone_label') }}</dt>

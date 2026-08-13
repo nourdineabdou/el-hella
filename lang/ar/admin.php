@@ -47,6 +47,8 @@ return [
     'sale_status_sale' => 'المبيعات',
     'sale_status_cancelled' => 'المبيعات الملغاة',
     'sale_status_visit_only' => 'زيارات بدون بيع',
+    'date_placeholder' => 'يوم/شهر/سنة',
+    'open_calendar' => 'فتح التقويم',
     'no_visits_found' => 'لا توجد زيارات مطابقة لهذه التصفية.',
     'no_shops_found' => 'لم يتم العثور على أي متجر.',
     'search_shop_placeholder' => 'ابحث بالاسم أو المالك أو الهاتف',

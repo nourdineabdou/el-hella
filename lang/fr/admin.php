@@ -47,6 +47,8 @@ return [
     'sale_status_sale' => 'Ventes',
     'sale_status_cancelled' => 'Ventes annulées',
     'sale_status_visit_only' => 'Visites sans vente',
+    'date_placeholder' => 'jj/mm/aaaa',
+    'open_calendar' => 'Ouvrir le calendrier',
     'no_visits_found' => 'Aucune visite ne correspond à ces filtres.',
     'no_shops_found' => 'Aucune boutique trouvée.',
     'search_shop_placeholder' => 'Rechercher par nom, propriétaire ou téléphone',

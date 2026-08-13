@@ -29,11 +29,11 @@
                 </div>
                 <div class="col-6 col-md-2">
                     <label class="form-label small fw-semibold">{{ __('admin.filter_date_from') }}</label>
-                    <input type="date" name="date_from" value="{{ old('date_from') }}" class="form-control" required>
+                    <x-date-input name="date_from" :value="old('date_from')" required />
                 </div>
                 <div class="col-6 col-md-2">
                     <label class="form-label small fw-semibold">{{ __('admin.filter_date_to') }}</label>
-                    <input type="date" name="date_to" value="{{ old('date_to') }}" class="form-control" required>
+                    <x-date-input name="date_to" :value="old('date_to')" required />
                 </div>
                 <div class="col-6 col-md-2">
                     <label class="form-label small fw-semibold">{{ __('admin.target_visits_label') }}</label>
@@ -51,11 +51,11 @@
             <form method="GET" action="{{ route('admin.goals.index') }}" class="row g-3 align-items-end">
                 <div class="col-6 col-md-3">
                     <label class="form-label small fw-semibold">{{ __('admin.filter_date_from') }}</label>
-                    <input type="date" name="date_from" value="{{ $dateFrom }}" class="form-control">
+                    <x-date-input name="date_from" :value="$dateFrom" />
                 </div>
                 <div class="col-6 col-md-3">
                     <label class="form-label small fw-semibold">{{ __('admin.filter_date_to') }}</label>
-                    <input type="date" name="date_to" value="{{ $dateTo }}" class="form-control">
+                    <x-date-input name="date_to" :value="$dateTo" />
                 </div>
                 <div class="col-12 col-md-4">
                     <label class="form-label small fw-semibold">{{ __('admin.filter_distributor') }}</label>

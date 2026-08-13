@@ -155,6 +155,54 @@ a {
     border-radius: .75rem;
 }
 
+/* Date fields — typable text input + optional native calendar, see
+   components/date-input.blade.php and js/date-field.js */
+.eh-date-field {
+    position: relative;
+}
+
+.eh-date-text {
+    padding-inline-end: 2.5rem;
+}
+
+.eh-date-native {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.eh-date-calendar-btn {
+    position: absolute;
+    inset-inline-end: .35rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2rem;
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    background: transparent;
+    border-radius: .5rem;
+    color: #6c7693;
+    z-index: 2;
+}
+
+.eh-date-calendar-btn:hover:not(:disabled) {
+    background: var(--eh-navy-100);
+    color: var(--eh-navy-700);
+}
+
+.eh-date-calendar-btn:disabled {
+    opacity: .4;
+}
+
 /* Pagination */
 .pagination {
     --bs-pagination-active-bg: var(--eh-navy-700);

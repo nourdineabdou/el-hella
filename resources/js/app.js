@@ -8,4 +8,4 @@ window.Swal = Swal;
 import './sidebar.js';
 import './distributor-shops.js';
 import './mobile-ux.js';
-import './confirm-forms.js';
+import './date-field.js';
