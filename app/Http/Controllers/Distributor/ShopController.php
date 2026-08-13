@@ -146,6 +146,28 @@ class ShopController extends Controller
             throw $e;
         }
 
+        $distributor = $request->user()->distributor;
+
+        if ($distributor) {
+            Visit::create([
+                'distributor_id' => $distributor->id,
+                'shop_id' => $shop->id,
+                'visit_type' => 'without_distribution',
+                'latitude' => $shop->latitude,
+                'longitude' => $shop->longitude,
+                'zone' => $this->zoneResolver->resolve((float) $shop->latitude, (float) $shop->longitude),
+                'distance_from_shop' => 0,
+                'is_within_allowed_distance' => true,
+                'visited_at' => now(),
+            ]);
+
+            $distributor->update([
+                'last_latitude' => $shop->latitude,
+                'last_longitude' => $shop->longitude,
+                'last_location_at' => now(),
+            ]);
+        }
+
         return response()->json([
             'message' => 'Boutique enregistrée.',
             'shop' => $shop,
