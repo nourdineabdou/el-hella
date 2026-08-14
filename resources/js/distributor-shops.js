@@ -743,12 +743,16 @@ function initSampleFlow({ sampleForm, getCurrentPositionState, updateLocationInf
     const selectedSamples = new Map();
 
     const isGramsUnit = (unit) => unit === 'kg';
+    // +/- buttons jump by these amounts (handy shortcuts for common sample
+    // sizes), but typing is never restricted to multiples of this — someone
+    // giving a 0.5g sample can just type it directly.
     const stepFor = (unit) => (isGramsUnit(unit) ? 50 : 1);
     const defaultValueFor = (unit) => (isGramsUnit(unit) ? 100 : 1);
+    const MIN_QUANTITY = 0.001;
     // Samples for kg products are typed in grams, but stock is tracked in kg —
     // convert the available balance into the same unit the input uses.
     const maxInputFor = (unit, available) => (isGramsUnit(unit) ? available * 1000 : available);
-    const clampQuantity = (value, unit, max) => Math.min(Math.max(stepFor(unit), value), max);
+    const clampQuantity = (value, max) => Math.min(Math.max(MIN_QUANTITY, value), max);
 
     const buildSelectedSampleRow = (product) => {
         const available = parseFloat(product.available) || 0;
@@ -767,7 +771,7 @@ function initSampleFlow({ sampleForm, getCurrentPositionState, updateLocationInf
             <td>
                 <div class="quantity-stepper mx-auto">
                     <button type="button" class="btn btn-outline-secondary quantity-btn quantity-decrement" aria-label="${getTranslation('decrease', 'Decrease')}">−</button>
-                    <input type="number" inputmode="decimal" min="${step}" max="${max}" step="any" value="${Math.min(defaultValueFor(product.unit), max)}" class="form-control form-control-lg text-center product-quantity-input" />
+                    <input type="number" inputmode="decimal" min="${MIN_QUANTITY}" max="${max}" step="any" value="${Math.min(defaultValueFor(product.unit), max)}" class="form-control form-control-lg text-center product-quantity-input" />
                     <button type="button" class="btn btn-outline-secondary quantity-btn quantity-increment" aria-label="${getTranslation('increase', 'Increase')}">+</button>
                 </div>
                 <div class="text-muted small text-center mt-1">${displayUnit}</div>
@@ -782,11 +786,11 @@ function initSampleFlow({ sampleForm, getCurrentPositionState, updateLocationInf
         const quantityInput = row.querySelector('.product-quantity-input');
 
         row.querySelector('.quantity-decrement').addEventListener('click', () => {
-            quantityInput.value = clampQuantity((parseFloat(quantityInput.value) || 0) - step, product.unit, max);
+            quantityInput.value = clampQuantity((parseFloat(quantityInput.value) || 0) - step, max);
         });
 
         row.querySelector('.quantity-increment').addEventListener('click', () => {
-            quantityInput.value = clampQuantity((parseFloat(quantityInput.value) || 0) + step, product.unit, max);
+            quantityInput.value = clampQuantity((parseFloat(quantityInput.value) || 0) + step, max);
         });
 
         quantityInput.addEventListener('keydown', (event) => {

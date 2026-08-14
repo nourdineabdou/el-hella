@@ -16,9 +16,9 @@ class DistributorStockItem extends Model
     ];
 
     protected $casts = [
-        'received_quantity' => 'decimal:3',
-        'current_quantity' => 'decimal:3',
-        'returned_quantity' => 'decimal:3',
+        'received_quantity' => 'decimal:4',
+        'current_quantity' => 'decimal:4',
+        'returned_quantity' => 'decimal:4',
     ];
 
     public function stockDay(): BelongsTo
@@ -40,6 +40,6 @@ class DistributorStockItem extends Model
             return null;
         }
 
-        return round((float) $this->returned_quantity - (float) $this->current_quantity, 3);
+        return round((float) $this->returned_quantity - (float) $this->current_quantity, 4);
     }
 }

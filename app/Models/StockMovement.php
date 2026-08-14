@@ -25,10 +25,10 @@ class StockMovement extends Model
     ];
 
     protected $casts = [
-        'quantity_input' => 'decimal:3',
-        'quantity_stock_unit' => 'decimal:3',
-        'balance_before' => 'decimal:3',
-        'balance_after' => 'decimal:3',
+        'quantity_input' => 'decimal:4',
+        'quantity_stock_unit' => 'decimal:4',
+        'balance_before' => 'decimal:4',
+        'balance_after' => 'decimal:4',
     ];
 
     public function distributor(): BelongsTo

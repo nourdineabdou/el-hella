@@ -31,10 +31,10 @@ class StockService
     public function convertToStockUnit(Product $product, float $quantityInput, string $inputUnit): float
     {
         if ($product->isWeighedInKg() && $inputUnit === 'g') {
-            return round($quantityInput / 1000, 3);
+            return round($quantityInput / 1000, 4);
         }
 
-        return round($quantityInput, 3);
+        return round($quantityInput, 4);
     }
 
     public function openOrCurrentDay(Distributor $distributor): DistributorStockDay
@@ -62,10 +62,10 @@ class StockService
             $item = $this->lockedItem($day, $product);
 
             $before = (float) $item->current_quantity;
-            $after = round($before + $quantity, 3);
+            $after = round($before + $quantity, 4);
 
             $item->update([
-                'received_quantity' => round((float) $item->received_quantity + $quantity, 3),
+                'received_quantity' => round((float) $item->received_quantity + $quantity, 4),
                 'current_quantity' => $after,
             ]);
 
@@ -134,7 +134,7 @@ class StockService
                 throw new InsufficientStockException($product, $before, $quantityStockUnit);
             }
 
-            $after = round($before - $quantityStockUnit, 3);
+            $after = round($before - $quantityStockUnit, 4);
             $item->update(['current_quantity' => $after]);
 
             return StockMovement::create([
@@ -192,7 +192,7 @@ class StockService
             }
 
             foreach ($day->items()->lockForUpdate()->get() as $item) {
-                $returned = round((float) ($returnedByProductId[$item->product_id] ?? 0), 3);
+                $returned = round((float) ($returnedByProductId[$item->product_id] ?? 0), 4);
                 $before = (float) $item->current_quantity;
 
                 $item->update(['returned_quantity' => $returned]);

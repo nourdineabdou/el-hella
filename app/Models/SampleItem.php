@@ -16,8 +16,8 @@ class SampleItem extends Model
     ];
 
     protected $casts = [
-        'quantity_input' => 'decimal:3',
-        'quantity_stock_unit' => 'decimal:3',
+        'quantity_input' => 'decimal:4',
+        'quantity_stock_unit' => 'decimal:4',
     ];
 
     public function sample(): BelongsTo
