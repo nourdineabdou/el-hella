@@ -45,6 +45,10 @@ $user = auth()->user();
                 <i class="bi bi-graph-up"></i>
                 <span>{{ __('menu.products_sold') }}</span>
             </a>
+            <a href="{{ route('admin.stock.index') }}" class="nav-link {{ request()->routeIs('admin.stock.*') ? 'active' : '' }}">
+                <i class="bi bi-box-seam"></i>
+                <span>{{ __('admin.stock_admin_title') }}</span>
+            </a>
             <a href="{{ route('admin.admins.index') }}" class="nav-link {{ request()->routeIs('admin.admins.*') ? 'active' : '' }}">
                 <i class="bi bi-person-badge"></i>
                 <span>{{ __('menu.admins') }}</span>
@@ -61,6 +65,10 @@ $user = auth()->user();
             <a href="{{ route('distributor.shops.index') }}" class="nav-link {{ request()->routeIs('distributor.shops.*') ? 'active' : '' }}">
                 <i class="bi bi-shop"></i>
                 <span>{{ __('menu.shops') }}</span>
+            </a>
+            <a href="{{ route('distributor.stock.index') }}" class="nav-link {{ request()->routeIs('distributor.stock.*') ? 'active' : '' }}">
+                <i class="bi bi-box-seam"></i>
+                <span>{{ __('admin.my_stock_title') }}</span>
             </a>
             <a href="{{ route('distributor.goals.index') }}" class="nav-link {{ request()->routeIs('distributor.goals.*') ? 'active' : '' }}">
                 <i class="bi bi-bullseye"></i>

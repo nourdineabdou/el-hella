@@ -57,6 +57,11 @@
                 <i class="bi bi-search me-2"></i>{{ __('Search a shop') }}
             </a>
         </div>
+        <div class="col-12">
+            <a href="{{ route('distributor.stock.index') }}" class="btn btn-outline-primary w-100 eh-action-btn">
+                <i class="bi bi-box-seam me-2"></i>{{ __('admin.my_stock_title') }}
+            </a>
+        </div>
     </div>
 
     <div class="card border-0 shadow-sm mt-4">

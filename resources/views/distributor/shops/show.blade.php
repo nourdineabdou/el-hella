@@ -41,6 +41,12 @@
             locationPermissionDeniedIOS: '{{ __('Location access was denied. On iPhone: Settings > Privacy & Security > Location Services > Safari Websites, set it to Allow, then reload this page.') }}',
             locationUnavailable: '{{ __('Unable to determine your position. Check that GPS is enabled.') }}',
             locationTimeout: '{{ __('Location request timed out. Move to an open area and try again.') }}',
+            giveSample: '{{ __('admin.give_sample_button') }}',
+            sampleSaved: '{{ __('admin.sample_saved') }}',
+            sampleSavedGpsAlert: '{{ __('admin.sample_saved_gps_alert') }}',
+            gramUnit: '{{ __('admin.gram_unit') }}',
+            availableStock: '{{ __('admin.available_stock_label') }}',
+            noStockAtAll: '{{ __('admin.no_stock_at_all') }}',
         };
     </script>
 
@@ -60,7 +66,7 @@
                 </div>
 
                 <div class="row g-3">
-                    <div class="col-12 col-md-6">
+                    <div class="col-12 col-md-4">
                         <div class="card border-0 shadow-sm h-100 btn-action-card position-relative" id="sell-action">
                             <div class="loading-overlay d-none">
                                 <div class="spinner-border text-primary" role="status"></div>
@@ -73,7 +79,20 @@
                         </div>
                     </div>
 
-                    <div class="col-12 col-md-6">
+                    <div class="col-12 col-md-4">
+                        <div class="card border-0 shadow-sm h-100 btn-action-card position-relative" id="sample-action">
+                            <div class="loading-overlay d-none">
+                                <div class="spinner-border text-warning" role="status"></div>
+                            </div>
+                            <div class="card-body text-center p-4">
+                                <i class="bi bi-gift-fill fs-1 text-warning"></i>
+                                <h3 class="h5 fw-bold mt-3">{{ __('admin.give_sample_button') }}</h3>
+                                <p class="text-muted">{{ __('admin.sample_hint') }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
                         <div class="card border-0 shadow-sm h-100 btn-action-card position-relative" id="visit-action">
                             <div class="loading-overlay d-none">
                                 <div class="spinner-border text-success" role="status"></div>
@@ -148,6 +167,58 @@
 
                             <div class="mt-4 d-grid">
                                 <button type="submit" class="btn btn-success btn-lg" data-default-text="{{ __('Confirm sale') }}">{{ __('Confirm sale') }}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="sample-panel" class="d-none p-0 p-md-2">
+                    <div class="card border-0 shadow-sm p-3">
+                        <div class="d-flex align-items-center justify-content-between mb-4">
+                            <div>
+                                <div class="small text-muted">{{ __('admin.give_sample_button') }}</div>
+                                <h3 class="h5 mb-0">{{ __('Search products') }}</h3>
+                            </div>
+                            <span class="badge bg-secondary">{{ __(':distance meters max', ['distance' => $maxDistance]) }}</span>
+                        </div>
+
+                        <form id="sample-form" action="{{ route('distributor.shops.visit', $shop) }}" method="POST">
+                            @csrf
+
+                            <div class="mb-3">
+                                <label for="sample-product-search" class="form-label">{{ __('Search product by name') }}</label>
+                                <div class="position-relative">
+                                    <i class="bi bi-search position-absolute top-50 translate-middle-y text-muted ps-3 search-icon"></i>
+                                    <input type="text" id="sample-product-search" inputmode="search" enterkeyhint="search" class="form-control form-control-lg ps-5" placeholder="{{ __('Search product') }}" autocomplete="off">
+                                </div>
+                            </div>
+
+                            <div id="sample-product-search-results" class="list-group mb-4 product-search-dropdown"></div>
+
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <h4 class="h6 mb-0">{{ __('admin.sample_products_title') }}</h4>
+                                <span id="selected-sample-count" class="badge bg-primary rounded-pill d-none">0</span>
+                            </div>
+
+                            <div id="selected-sample-empty" class="alert alert-light border rounded-4 text-center text-muted mb-0">
+                                {{ __('No products selected') }}
+                            </div>
+
+                            <div id="selected-sample-table-wrapper" class="table-responsive d-none rounded-4 border mb-0">
+                                <table class="table align-middle mb-0 product-table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">{{ __('Product') }}</th>
+                                            <th scope="col" class="text-center">{{ __('Quantity') }}</th>
+                                            <th scope="col" class="text-end"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="selected-sample-list"></tbody>
+                                </table>
+                            </div>
+
+                            <div class="mt-4 d-grid">
+                                <button type="submit" class="btn btn-warning btn-lg" data-default-text="{{ __('admin.confirm_samples_button') }}">{{ __('admin.confirm_samples_button') }}</button>
                             </div>
                         </form>
                     </div>

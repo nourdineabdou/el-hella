@@ -51,4 +51,28 @@ class Distributor extends Model
     {
         return $this->hasMany(GpsAlert::class);
     }
+
+    public function stockDays(): HasMany
+    {
+        return $this->hasMany(DistributorStockDay::class);
+    }
+
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class);
+    }
+
+    public function samples(): HasMany
+    {
+        return $this->hasMany(Sample::class);
+    }
+
+    /**
+     * The distributor's single open stock day, if any — see StockService,
+     * which is responsible for opening/closing days.
+     */
+    public function openStockDay(): ?DistributorStockDay
+    {
+        return $this->stockDays()->whereNull('closed_at')->first();
+    }
 }

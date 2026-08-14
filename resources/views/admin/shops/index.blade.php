@@ -65,6 +65,7 @@
                                 <th>{{ __('admin.table_visits_count') }}</th>
                                 <th>{{ __('admin.table_total_quantity') }}</th>
                                 <th>{{ __('dashboard.table_status') }}</th>
+                                <th>{{ __('admin.table_created_at') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -82,6 +83,7 @@
                                             <span class="badge bg-secondary-subtle text-secondary">{{ __('dashboard.inactive') }}</span>
                                         @endif
                                     </td>
+                                    <td class="text-muted small" data-label="{{ __('admin.table_created_at') }}">{{ $shop->created_at?->format('d/m/Y H:i') }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

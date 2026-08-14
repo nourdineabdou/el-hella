@@ -9,10 +9,12 @@ use App\Http\Controllers\Admin\MapController as AdminMapController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\ShopController as AdminShopController;
 use App\Http\Controllers\Admin\SoldProductController as AdminSoldProductController;
+use App\Http\Controllers\Admin\StockController as AdminStockController;
 use App\Http\Controllers\Admin\VisitController as AdminVisitController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Distributor\DashboardController as DistributorDashboardController;
 use App\Http\Controllers\Distributor\GoalController as DistributorGoalController;
+use App\Http\Controllers\Distributor\StockController as DistributorStockController;
 use App\Http\Controllers\Distributor\VisitController as DistributorVisitController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\ProfileController;
@@ -53,6 +55,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/products-sold/export', [AdminSoldProductController::class, 'export'])->name('products-sold.export');
         Route::get('/admins', [AdminUserController::class, 'index'])->name('admins.index');
         Route::post('/admins', [AdminUserController::class, 'store'])->name('admins.store');
+        Route::get('/stock', [AdminStockController::class, 'index'])->name('stock.index');
+        Route::get('/stock/movements', [AdminStockController::class, 'movements'])->name('stock.movements');
+        Route::post('/stock/days/{stockDay}/review', [AdminStockController::class, 'reviewDiscrepancy'])->name('stock.review-discrepancy');
     });
 
     Route::middleware('role:distributor')->prefix('distributor')->name('distributor.')->group(function () {
@@ -67,6 +72,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/shops/{shop}', [App\Http\Controllers\Distributor\ShopController::class, 'show'])->name('shops.show');
         Route::post('/shops/{shop}/sell', [App\Http\Controllers\Distributor\ShopController::class, 'sell'])->name('shops.sell');
         Route::post('/shops/{shop}/visit', [App\Http\Controllers\Distributor\ShopController::class, 'visit'])->name('shops.visit');
+
+        Route::get('/stock', [DistributorStockController::class, 'index'])->name('stock.index');
+        Route::get('/stock/receive', [DistributorStockController::class, 'showReceive'])->name('stock.receive');
+        Route::post('/stock/receive', [DistributorStockController::class, 'receive'])->name('stock.receive.store');
+        Route::get('/stock/day', [DistributorStockController::class, 'day'])->name('stock.day');
+        Route::post('/stock/day/close', [DistributorStockController::class, 'closeDay'])->name('stock.day.close');
     });
 });
 

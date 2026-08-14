@@ -296,8 +296,11 @@ async function loadNearbyShops(position) {
 function handleShopShow() {
     const sellButton = document.querySelector('#sell-action');
     const visitButton = document.querySelector('#visit-action');
+    const sampleButton = document.querySelector('#sample-action');
     const salePanel = document.querySelector('#sale-panel');
+    const samplePanel = document.querySelector('#sample-panel');
     const saleForm = document.querySelector('#sale-form');
+    const sampleForm = document.querySelector('#sample-form');
     const visitForm = document.querySelector('#visit-form');
     const distanceLabel = document.querySelector('#distance-label');
     const locationNote = document.querySelector('#location-note');
@@ -309,6 +312,8 @@ function handleShopShow() {
     if (!sellButton || !visitButton || !saleForm || !visitForm || !shopLatInput || !shopLngInput || !maxDistanceInput) {
         return;
     }
+
+    const hasSampleFlow = sampleButton && samplePanel && sampleForm;
 
     const shopLat = parseFloat(shopLatInput.value);
     const shopLng = parseFloat(shopLngInput.value);
@@ -346,7 +351,7 @@ function handleShopShow() {
         }
     };
 
-    const actionCards = [sellButton, visitButton];
+    const actionCards = hasSampleFlow ? [sellButton, visitButton, sampleButton] : [sellButton, visitButton];
 
     const setActionCardsLoading = (isLoading) => {
         actionCards.forEach((card) => {
@@ -382,6 +387,15 @@ function handleShopShow() {
         salePanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
         setTimeout(() => setActionCardsLoading(false), 180);
     });
+
+    if (hasSampleFlow) {
+        sampleButton.addEventListener('click', () => {
+            setActionCardsLoading(true);
+            samplePanel.classList.remove('d-none');
+            samplePanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            setTimeout(() => setActionCardsLoading(false), 180);
+        });
+    }
 
     visitButton.addEventListener('click', async () => {
         setActionCardsLoading(true);
@@ -455,22 +469,23 @@ function handleShopShow() {
     const selectedProductCount = document.querySelector('#selected-product-count');
     const selectedProducts = new Map();
 
-    const clampQuantity = (value) => Math.max(1, value);
+    const clampQuantity = (value, available) => Math.min(Math.max(1, value), available);
 
     const buildSelectedProductRow = (product) => {
+        const available = parseFloat(product.available) || 0;
         const row = document.createElement('tr');
         row.className = 'product-quantity-row';
         row.dataset.productId = product.id;
         row.innerHTML = `
             <td>
                 <div class="fw-semibold">${product.name}</div>
-                <div class="text-muted small">${product.unit}</div>
+                <div class="text-muted small">${getTranslation('availableStock', 'Available')}: ${available} ${product.unit}</div>
                 <input type="hidden" name="items[][product_id]" value="${product.id}" />
             </td>
             <td>
                 <div class="quantity-stepper mx-auto">
                     <button type="button" class="btn btn-outline-secondary quantity-btn quantity-decrement" aria-label="${getTranslation('decrease', 'Decrease')}">−</button>
-                    <input type="number" inputmode="decimal" min="1" step="any" value="1" class="form-control form-control-lg text-center product-quantity-input" />
+                    <input type="number" inputmode="decimal" min="1" max="${available}" step="any" value="1" class="form-control form-control-lg text-center product-quantity-input" />
                     <button type="button" class="btn btn-outline-secondary quantity-btn quantity-increment" aria-label="${getTranslation('increase', 'Increase')}">+</button>
                 </div>
             </td>
@@ -484,11 +499,11 @@ function handleShopShow() {
         const quantityInput = row.querySelector('.product-quantity-input');
 
         row.querySelector('.quantity-decrement').addEventListener('click', () => {
-            quantityInput.value = clampQuantity((parseFloat(quantityInput.value) || 0) - 1);
+            quantityInput.value = clampQuantity((parseFloat(quantityInput.value) || 0) - 1, available);
         });
 
         row.querySelector('.quantity-increment').addEventListener('click', () => {
-            quantityInput.value = clampQuantity((parseFloat(quantityInput.value) || 0) + 1);
+            quantityInput.value = clampQuantity((parseFloat(quantityInput.value) || 0) + 1, available);
         });
 
         quantityInput.addEventListener('keydown', (event) => {
@@ -532,22 +547,25 @@ function handleShopShow() {
         productSearchResults.innerHTML = '';
     };
 
-    const renderSearchResults = (products) => {
+    const renderSearchResults = (products, noStock) => {
         if (!productSearchResults) {
             return;
         }
 
         if (products.length === 0) {
-            productSearchResults.innerHTML = `<div class="list-group-item text-muted">${getTranslation('noProductsFound', 'No products found')}</div>`;
+            const message = noStock
+                ? getTranslation('noStockAtAll', 'No stock available. Add stock first.')
+                : getTranslation('noProductsFound', 'No products found');
+            productSearchResults.innerHTML = `<div class="list-group-item text-muted">${message}</div>`;
             return;
         }
 
         productSearchResults.innerHTML = products.map((product) => {
             const isDisabled = selectedProducts.has(String(product.id)) ? 'disabled' : '';
             return `
-                <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3" data-product-id="${product.id}" data-product-name="${product.name}" data-product-unit="${product.unit}" ${isDisabled}>
+                <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3" data-product-id="${product.id}" data-product-name="${product.name}" data-product-unit="${product.unit}" data-product-available="${product.available}" ${isDisabled}>
                     <span class="fw-semibold">${product.name}</span>
-                    <span class="badge bg-primary rounded-pill">${product.unit}</span>
+                    <span class="badge bg-primary rounded-pill">${product.available} ${product.unit}</span>
                 </button>
             `;
         }).join('');
@@ -557,13 +575,14 @@ function handleShopShow() {
                 const productId = button.dataset.productId;
                 const productName = button.dataset.productName;
                 const productUnit = button.dataset.productUnit;
+                const productAvailable = button.dataset.productAvailable;
 
                 if (selectedProducts.has(productId)) {
                     return;
                 }
 
                 selectedProducts.set(productId, { id: productId, name: productName, unit: productUnit });
-                const { row, quantityInput } = buildSelectedProductRow({ id: productId, name: productName, unit: productUnit });
+                const { row, quantityInput } = buildSelectedProductRow({ id: productId, name: productName, unit: productUnit, available: productAvailable });
                 selectedProductList.appendChild(row);
                 refreshSelectedProductsView();
 
@@ -589,7 +608,7 @@ function handleShopShow() {
 
         try {
             const response = await $.getJSON(`/distributor/shops/products/search`, { q: query });
-            renderSearchResults(response.data);
+            renderSearchResults(response.data, response.no_stock);
         } catch (error) {
             productSearchResults.innerHTML = `<div class="list-group-item text-danger">${getTranslation('searchError', 'Search error. Please try again.')}</div>`;
         }
@@ -693,7 +712,282 @@ function handleShopShow() {
         }
     });
 
+    if (hasSampleFlow) {
+        initSampleFlow({
+            sampleForm,
+            getCurrentPositionState: () => ({ currentPosition, lastLocationError }),
+            updateLocationInfo,
+            shopLat,
+            shopLng,
+            maxDistance,
+            setActionCardsLoading,
+            setSubmitLoading,
+        });
+    }
+
     updateLocationInfo();
+}
+
+// Mirrors the sale product picker (search, add, quantity stepper, remove) but
+// quantities are grams for kg-weighed products (samples are small amounts)
+// and the product's own unit otherwise — matching how the sale flow already
+// uses the product's own unit. Posts to the same "visit" endpoint as a plain
+// visite simple, just carrying a `samples` array alongside the GPS fields.
+function initSampleFlow({ sampleForm, getCurrentPositionState, updateLocationInfo, shopLat, shopLng, maxDistance, setActionCardsLoading, setSubmitLoading }) {
+    const productSearch = document.querySelector('#sample-product-search');
+    const productSearchResults = document.querySelector('#sample-product-search-results');
+    const selectedList = document.querySelector('#selected-sample-list');
+    const selectedEmpty = document.querySelector('#selected-sample-empty');
+    const selectedTableWrapper = document.querySelector('#selected-sample-table-wrapper');
+    const selectedCount = document.querySelector('#selected-sample-count');
+    const selectedSamples = new Map();
+
+    const isGramsUnit = (unit) => unit === 'kg';
+    const stepFor = (unit) => (isGramsUnit(unit) ? 50 : 1);
+    const defaultValueFor = (unit) => (isGramsUnit(unit) ? 100 : 1);
+    // Samples for kg products are typed in grams, but stock is tracked in kg —
+    // convert the available balance into the same unit the input uses.
+    const maxInputFor = (unit, available) => (isGramsUnit(unit) ? available * 1000 : available);
+    const clampQuantity = (value, unit, max) => Math.min(Math.max(stepFor(unit), value), max);
+
+    const buildSelectedSampleRow = (product) => {
+        const available = parseFloat(product.available) || 0;
+        const displayUnit = isGramsUnit(product.unit) ? getTranslation('gramUnit', 'g') : product.unit;
+        const step = stepFor(product.unit);
+        const max = maxInputFor(product.unit, available);
+        const row = document.createElement('tr');
+        row.className = 'product-quantity-row';
+        row.dataset.productId = product.id;
+        row.innerHTML = `
+            <td>
+                <div class="fw-semibold">${product.name}</div>
+                <div class="text-muted small">${getTranslation('availableStock', 'Available')}: ${available} ${product.unit}</div>
+                <input type="hidden" name="samples[][product_id]" value="${product.id}" />
+            </td>
+            <td>
+                <div class="quantity-stepper mx-auto">
+                    <button type="button" class="btn btn-outline-secondary quantity-btn quantity-decrement" aria-label="${getTranslation('decrease', 'Decrease')}">−</button>
+                    <input type="number" inputmode="decimal" min="${step}" max="${max}" step="any" value="${Math.min(defaultValueFor(product.unit), max)}" class="form-control form-control-lg text-center product-quantity-input" />
+                    <button type="button" class="btn btn-outline-secondary quantity-btn quantity-increment" aria-label="${getTranslation('increase', 'Increase')}">+</button>
+                </div>
+                <div class="text-muted small text-center mt-1">${displayUnit}</div>
+            </td>
+            <td class="text-end">
+                <button type="button" class="btn btn-outline-danger remove-product-button" aria-label="${getTranslation('remove', 'Remove')}">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+
+        const quantityInput = row.querySelector('.product-quantity-input');
+
+        row.querySelector('.quantity-decrement').addEventListener('click', () => {
+            quantityInput.value = clampQuantity((parseFloat(quantityInput.value) || 0) - step, product.unit, max);
+        });
+
+        row.querySelector('.quantity-increment').addEventListener('click', () => {
+            quantityInput.value = clampQuantity((parseFloat(quantityInput.value) || 0) + step, product.unit, max);
+        });
+
+        quantityInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                productSearch?.focus();
+            }
+        });
+
+        row.querySelector('.remove-product-button').addEventListener('click', () => {
+            selectedSamples.delete(product.id);
+            selectedList.removeChild(row);
+            refreshSelectedView();
+        });
+
+        return { row, quantityInput };
+    };
+
+    const refreshSelectedView = () => {
+        const hasProducts = selectedSamples.size > 0;
+
+        if (selectedEmpty) {
+            selectedEmpty.classList.toggle('d-none', hasProducts);
+        }
+
+        if (selectedTableWrapper) {
+            selectedTableWrapper.classList.toggle('d-none', !hasProducts);
+        }
+
+        if (selectedCount) {
+            selectedCount.textContent = selectedSamples.size;
+            selectedCount.classList.toggle('d-none', !hasProducts);
+        }
+    };
+
+    const clearSearchResults = () => {
+        if (productSearchResults) {
+            productSearchResults.innerHTML = '';
+        }
+    };
+
+    const renderSearchResults = (products, noStock) => {
+        if (!productSearchResults) {
+            return;
+        }
+
+        if (products.length === 0) {
+            const message = noStock
+                ? getTranslation('noStockAtAll', 'No stock available. Add stock first.')
+                : getTranslation('noProductsFound', 'No products found');
+            productSearchResults.innerHTML = `<div class="list-group-item text-muted">${message}</div>`;
+            return;
+        }
+
+        productSearchResults.innerHTML = products.map((product) => {
+            const isDisabled = selectedSamples.has(String(product.id)) ? 'disabled' : '';
+            return `
+                <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3" data-product-id="${product.id}" data-product-name="${product.name}" data-product-unit="${product.unit}" data-product-available="${product.available}" ${isDisabled}>
+                    <span class="fw-semibold">${product.name}</span>
+                    <span class="badge bg-primary rounded-pill">${product.available} ${product.unit}</span>
+                </button>
+            `;
+        }).join('');
+
+        productSearchResults.querySelectorAll('button[data-product-id]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const productId = button.dataset.productId;
+                const productName = button.dataset.productName;
+                const productUnit = button.dataset.productUnit;
+                const productAvailable = button.dataset.productAvailable;
+
+                if (selectedSamples.has(productId)) {
+                    return;
+                }
+
+                selectedSamples.set(productId, { id: productId, name: productName, unit: productUnit });
+                const { row, quantityInput } = buildSelectedSampleRow({ id: productId, name: productName, unit: productUnit, available: productAvailable });
+                selectedList.appendChild(row);
+                refreshSelectedView();
+
+                productSearch.value = '';
+                clearSearchResults();
+                quantityInput.focus();
+                quantityInput.select();
+            });
+        });
+    };
+
+    const searchProducts = async (query) => {
+        if (!productSearchResults) {
+            return;
+        }
+
+        if (query.trim().length === 0) {
+            clearSearchResults();
+            return;
+        }
+
+        productSearchResults.innerHTML = '<div class="list-group-item text-center text-muted"><div class="spinner-border spinner-border-sm" role="status"></div></div>';
+
+        try {
+            const response = await $.getJSON(`/distributor/shops/products/search`, { q: query });
+            renderSearchResults(response.data, response.no_stock);
+        } catch (error) {
+            productSearchResults.innerHTML = `<div class="list-group-item text-danger">${getTranslation('searchError', 'Search error. Please try again.')}</div>`;
+        }
+    };
+
+    if (productSearch) {
+        productSearch.addEventListener('input', () => {
+            clearTimeout(productSearch._timer);
+            productSearch._timer = setTimeout(() => searchProducts(productSearch.value), 250);
+        });
+
+        refreshSelectedView();
+    }
+
+    sampleForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        setActionCardsLoading(true);
+        setSubmitLoading(sampleForm, true);
+        await updateLocationInfo();
+
+        const { currentPosition, lastLocationError } = getCurrentPositionState();
+
+        if (!currentPosition) {
+            setActionCardsLoading(false);
+            setSubmitLoading(sampleForm, false);
+            Swal.fire({ icon: 'warning', title: getTranslation('gpsRequired', 'GPS required'), text: describeGeolocationError(lastLocationError) });
+            return;
+        }
+
+        const distance = getDistanceBetween(shopLat, shopLng, currentPosition.latitude, currentPosition.longitude);
+        const isOutOfRange = !isWithinAllowedDistance(distance, currentPosition.accuracy, maxDistance);
+
+        if (isOutOfRange) {
+            const result = await Swal.fire({
+                icon: 'warning',
+                title: getTranslation('outOfRangeTitle', 'Too far from the shop'),
+                text: formatOutOfRangeWarning(distance, maxDistance),
+                showCancelButton: true,
+                confirmButtonText: getTranslation('registerAnyway', 'Register anyway'),
+                cancelButtonText: getTranslation('cancel', 'Cancel'),
+            });
+
+            if (!result.isConfirmed) {
+                setActionCardsLoading(false);
+                setSubmitLoading(sampleForm, false);
+                return;
+            }
+        }
+
+        if (selectedSamples.size === 0) {
+            setActionCardsLoading(false);
+            setSubmitLoading(sampleForm, false);
+            Swal.fire({ icon: 'warning', title: getTranslation('quantityRequiredTitle', 'Quantity required'), text: getTranslation('quantityRequiredText', 'Enter a quantity for at least one product.') });
+            return;
+        }
+
+        const samples = Array.from(selectedList.querySelectorAll('.product-quantity-row')).map((row) => {
+            return {
+                product_id: row.dataset.productId,
+                quantity: parseFloat(row.querySelector('.product-quantity-input').value) || 0,
+            };
+        }).filter((sample) => sample.quantity > 0);
+
+        if (samples.length === 0) {
+            setActionCardsLoading(false);
+            setSubmitLoading(sampleForm, false);
+            Swal.fire({ icon: 'warning', title: getTranslation('quantityRequiredTitle', 'Quantity required'), text: getTranslation('quantityRequiredText', 'Enter a quantity for at least one product.') });
+            return;
+        }
+
+        try {
+            const response = await $.ajax({
+                url: sampleForm.action,
+                method: 'POST',
+                data: {
+                    latitude: currentPosition.latitude,
+                    longitude: currentPosition.longitude,
+                    gps_accuracy: currentPosition.accuracy,
+                    samples,
+                    _token: sampleForm.querySelector('input[name=_token]').value,
+                },
+            });
+
+            const savedOutOfRange = isOutOfRange || response.gps_alert;
+            await Swal.fire({
+                icon: savedOutOfRange ? 'warning' : 'success',
+                title: getTranslation(savedOutOfRange ? 'sampleSavedGpsAlert' : 'sampleSaved', 'Sample saved.'),
+                showConfirmButton: false,
+                timer: 2000,
+            });
+            window.location.reload();
+        } catch (error) {
+            setActionCardsLoading(false);
+            setSubmitLoading(sampleForm, false);
+            const message = error.responseJSON?.message || getTranslation('saleError', 'Unable to save the sale.');
+            await Swal.fire({ icon: 'error', title: getTranslation('errorTitle', 'Error'), text: message });
+        }
+    });
 }
 
 function getDistanceBetween(lat1, lon1, lat2, lon2) {

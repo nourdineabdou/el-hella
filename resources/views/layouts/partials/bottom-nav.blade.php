@@ -35,6 +35,10 @@
             <i class="bi bi-shop"></i>
             <span>{{ __('menu.shops') }}</span>
         </a>
+        <a href="{{ route('distributor.stock.index') }}" class="eh-bottom-nav-item {{ request()->routeIs('distributor.stock.*') ? 'active' : '' }}">
+            <i class="bi bi-box-seam"></i>
+            <span>{{ __('admin.my_stock_title') }}</span>
+        </a>
         <a href="{{ route('distributor.goals.index') }}" class="eh-bottom-nav-item {{ request()->routeIs('distributor.goals.*') ? 'active' : '' }}">
             <i class="bi bi-bullseye"></i>
             <span>{{ __('menu.goals') }}</span>

@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers\Distributor;
 
+use App\Exceptions\InsufficientStockException;
 use App\Http\Controllers\Controller;
 use App\Models\Distribution;
 use App\Models\DistributionItem;
 use App\Models\GpsAlert;
 use App\Models\Product;
+use App\Models\Sample;
+use App\Models\SampleItem;
 use App\Models\Shop;
 use App\Models\Visit;
+use App\Services\StockService;
 use App\Services\ZoneResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -29,8 +33,10 @@ class ShopController extends Controller
      */
     private const MAX_ACCURACY_BONUS_METERS = 50;
 
-    public function __construct(private readonly ZoneResolver $zoneResolver)
-    {
+    public function __construct(
+        private readonly ZoneResolver $zoneResolver,
+        private readonly StockService $stock,
+    ) {
     }
 
     public function index()
@@ -182,6 +188,12 @@ class ShopController extends Controller
         ]);
     }
 
+    /**
+     * Only products the distributor currently has stock for — selling or
+     * sampling something they have zero of makes no sense, and would just
+     * get rejected by StockService anyway. Includes each product's current
+     * stock so the picker can show it.
+     */
     public function searchProducts(Request $request)
     {
         $search = trim($request->input('q', ''));
@@ -190,8 +202,24 @@ class ShopController extends Controller
             return response()->json(['data' => []]);
         }
 
+        $distributor = $request->user()->distributor;
+        $stockDay = $distributor?->openStockDay();
+
+        if (! $stockDay) {
+            return response()->json(['data' => [], 'no_stock' => true]);
+        }
+
+        $stockByProduct = $stockDay->items()
+            ->where('current_quantity', '>', 0)
+            ->pluck('current_quantity', 'product_id');
+
+        if ($stockByProduct->isEmpty()) {
+            return response()->json(['data' => [], 'no_stock' => true]);
+        }
+
         $products = Product::query()
             ->where('is_active', true)
+            ->whereIn('id', $stockByProduct->keys())
             ->where(function ($query) use ($search) {
                 $query->where('name_ar', 'like', "%{$search}%")
                     ->orWhere('name_fr', 'like', "%{$search}%")
@@ -201,12 +229,13 @@ class ShopController extends Controller
             ->limit(30)
             ->get(['id', 'name_ar', 'name_fr', 'unit', 'code']);
 
-        $data = $products->map(function ($product) {
+        $data = $products->map(function ($product) use ($stockByProduct) {
             return [
                 'id' => $product->id,
                 'name' => app()->getLocale() === 'fr' && $product->name_fr ? $product->name_fr : $product->name_ar,
                 'unit' => $product->unit,
                 'code' => $product->code,
+                'available' => (float) $stockByProduct[$product->id],
             ];
         });
 
@@ -241,69 +270,84 @@ class ShopController extends Controller
 
         $zone = $this->zoneResolver->resolve((float) $request->latitude, (float) $request->longitude);
 
-        DB::transaction(function () use ($request, $shop, $distributor, $distance, $zone, $isWithinRange) {
-            $visit = Visit::create([
-                'distributor_id' => $distributor->id,
-                'shop_id' => $shop->id,
-                'visit_type' => 'distribution',
-                'latitude' => $request->latitude,
-                'longitude' => $request->longitude,
-                'zone' => $zone,
-                'gps_accuracy' => $request->input('gps_accuracy'),
-                'distance_from_shop' => $distance,
-                'is_within_allowed_distance' => $isWithinRange,
-                'visited_at' => now(),
-            ]);
+        try {
+            DB::transaction(function () use ($request, $shop, $distributor, $distance, $zone, $isWithinRange, $user) {
+                $visit = Visit::create([
+                    'distributor_id' => $distributor->id,
+                    'shop_id' => $shop->id,
+                    'visit_type' => 'distribution',
+                    'latitude' => $request->latitude,
+                    'longitude' => $request->longitude,
+                    'zone' => $zone,
+                    'gps_accuracy' => $request->input('gps_accuracy'),
+                    'distance_from_shop' => $distance,
+                    'is_within_allowed_distance' => $isWithinRange,
+                    'visited_at' => now(),
+                ]);
 
-            if (! $isWithinRange) {
-                GpsAlert::create([
+                if (! $isWithinRange) {
+                    GpsAlert::create([
+                        'visit_id' => $visit->id,
+                        'distributor_id' => $distributor->id,
+                        'shop_id' => $shop->id,
+                        'distance' => $distance,
+                        'allowed_distance' => self::MAX_DISTANCE_METERS,
+                        'status' => 'pending',
+                    ]);
+                }
+
+                $totalQuantity = 0;
+                $distribution = Distribution::create([
                     'visit_id' => $visit->id,
                     'distributor_id' => $distributor->id,
                     'shop_id' => $shop->id,
-                    'distance' => $distance,
-                    'allowed_distance' => self::MAX_DISTANCE_METERS,
-                    'status' => 'pending',
+                    'total_quantity' => 0,
+                    'gps_status' => 'valid',
+                    'distributed_at' => now(),
                 ]);
-            }
 
-            $totalQuantity = 0;
-            $distribution = Distribution::create([
-                'visit_id' => $visit->id,
-                'distributor_id' => $distributor->id,
-                'shop_id' => $shop->id,
-                'total_quantity' => 0,
-                'gps_status' => 'valid',
-                'distributed_at' => now(),
-            ]);
+                foreach ($request->items as $item) {
+                    $quantity = floatval($item['quantity']);
+                    if ($quantity <= 0) {
+                        continue;
+                    }
 
-            foreach ($request->items as $item) {
-                $quantity = floatval($item['quantity']);
-                if ($quantity <= 0) {
-                    continue;
+                    $product = Product::find($item['product_id']);
+                    if (! $product) {
+                        continue;
+                    }
+
+                    $distributionItem = DistributionItem::create([
+                        'distribution_id' => $distribution->id,
+                        'product_id' => $product->id,
+                        'quantity' => $quantity,
+                        'unit' => $product->unit ?: 'kg',
+                    ]);
+                    $totalQuantity += $quantity;
+
+                    $this->stock->deductForSale($distributor, $product, $quantity, [
+                        'shop_id' => $shop->id,
+                        'visit_id' => $visit->id,
+                        'distribution_item_id' => $distributionItem->id,
+                    ], $user);
                 }
 
-                $product = Product::find($item['product_id']);
-                if (! $product) {
-                    continue;
-                }
+                $distribution->update(['total_quantity' => $totalQuantity]);
 
-                DistributionItem::create([
-                    'distribution_id' => $distribution->id,
-                    'product_id' => $product->id,
-                    'quantity' => $quantity,
-                    'unit' => $product->unit ?: 'kg',
+                $distributor->update([
+                    'last_latitude' => $request->latitude,
+                    'last_longitude' => $request->longitude,
+                    'last_location_at' => now(),
                 ]);
-                $totalQuantity += $quantity;
-            }
-
-            $distribution->update(['total_quantity' => $totalQuantity]);
-
-            $distributor->update([
-                'last_latitude' => $request->latitude,
-                'last_longitude' => $request->longitude,
-                'last_location_at' => now(),
-            ]);
-        });
+            });
+        } catch (InsufficientStockException $e) {
+            return response()->json([
+                'message' => __('admin.insufficient_stock', [
+                    'available' => rtrim(rtrim(number_format($e->available, 3), '0'), '.'),
+                    'unit' => $e->product->unit,
+                ]),
+            ], 422);
+        }
 
         return response()->json([
             'message' => 'Vente enregistrée avec succès.',
@@ -316,6 +360,9 @@ class ShopController extends Controller
         $request->validate([
             'latitude' => ['required', 'numeric'],
             'longitude' => ['required', 'numeric'],
+            'samples' => ['nullable', 'array'],
+            'samples.*.product_id' => ['required_with:samples', 'exists:products,id'],
+            'samples.*.quantity' => ['required_with:samples', 'numeric', 'min:0.001'],
         ]);
 
         $distance = $this->calculateDistance(
@@ -334,39 +381,96 @@ class ShopController extends Controller
             return response()->json(['message' => 'Distributeur non trouvé.'], 403);
         }
 
-        $visit = Visit::create([
-            'distributor_id' => $distributor->id,
-            'shop_id' => $shop->id,
-            'visit_type' => 'without_distribution',
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
-            'zone' => $this->zoneResolver->resolve((float) $request->latitude, (float) $request->longitude),
-            'gps_accuracy' => $request->input('gps_accuracy'),
-            'distance_from_shop' => $distance,
-            'is_within_allowed_distance' => $isWithinRange,
-            'visited_at' => now(),
-        ]);
+        $zone = $this->zoneResolver->resolve((float) $request->latitude, (float) $request->longitude);
+        $samples = $request->input('samples', []);
 
-        if (! $isWithinRange) {
-            GpsAlert::create([
-                'visit_id' => $visit->id,
-                'distributor_id' => $distributor->id,
-                'shop_id' => $shop->id,
-                'distance' => $distance,
-                'allowed_distance' => self::MAX_DISTANCE_METERS,
-                'status' => 'pending',
-            ]);
+        try {
+            $visit = DB::transaction(function () use ($request, $shop, $distributor, $distance, $zone, $isWithinRange, $samples, $user) {
+                $visit = Visit::create([
+                    'distributor_id' => $distributor->id,
+                    'shop_id' => $shop->id,
+                    'visit_type' => 'without_distribution',
+                    'latitude' => $request->latitude,
+                    'longitude' => $request->longitude,
+                    'zone' => $zone,
+                    'gps_accuracy' => $request->input('gps_accuracy'),
+                    'distance_from_shop' => $distance,
+                    'is_within_allowed_distance' => $isWithinRange,
+                    'visited_at' => now(),
+                ]);
+
+                if (! $isWithinRange) {
+                    GpsAlert::create([
+                        'visit_id' => $visit->id,
+                        'distributor_id' => $distributor->id,
+                        'shop_id' => $shop->id,
+                        'distance' => $distance,
+                        'allowed_distance' => self::MAX_DISTANCE_METERS,
+                        'status' => 'pending',
+                    ]);
+                }
+
+                if (! empty($samples)) {
+                    $sample = Sample::create([
+                        'visit_id' => $visit->id,
+                        'distributor_id' => $distributor->id,
+                        'shop_id' => $shop->id,
+                        'given_at' => now(),
+                    ]);
+
+                    foreach ($samples as $entry) {
+                        $quantity = floatval($entry['quantity']);
+                        if ($quantity <= 0) {
+                            continue;
+                        }
+
+                        $product = Product::find($entry['product_id']);
+                        if (! $product) {
+                            continue;
+                        }
+
+                        $unit = $product->isWeighedInKg() ? 'g' : $product->unit;
+                        $quantityStockUnit = $this->stock->convertToStockUnit($product, $quantity, $unit);
+
+                        $sampleItem = SampleItem::create([
+                            'sample_id' => $sample->id,
+                            'product_id' => $product->id,
+                            'quantity_input' => $quantity,
+                            'input_unit' => $unit,
+                            'quantity_stock_unit' => $quantityStockUnit,
+                        ]);
+
+                        $this->stock->deductForSample($distributor, $product, $quantity, $unit, [
+                            'shop_id' => $shop->id,
+                            'visit_id' => $visit->id,
+                            'sample_item_id' => $sampleItem->id,
+                        ], $user);
+                    }
+                }
+
+                $distributor->update([
+                    'last_latitude' => $request->latitude,
+                    'last_longitude' => $request->longitude,
+                    'last_location_at' => now(),
+                ]);
+
+                return $visit;
+            });
+        } catch (InsufficientStockException $e) {
+            $isGrams = $e->product->isWeighedInKg();
+
+            return response()->json([
+                'message' => __('admin.insufficient_stock_sample', [
+                    'available' => rtrim(rtrim(number_format($isGrams ? $e->available * 1000 : $e->available, 3), '0'), '.'),
+                    'unit' => $isGrams ? __('admin.gram_unit') : $e->product->unit,
+                ]),
+            ], 422);
         }
-
-        $distributor->update([
-            'last_latitude' => $request->latitude,
-            'last_longitude' => $request->longitude,
-            'last_location_at' => now(),
-        ]);
 
         return response()->json([
             'message' => 'Visite enregistrée.',
             'gps_alert' => ! $isWithinRange,
+            'visit_id' => $visit->id,
         ]);
     }
 

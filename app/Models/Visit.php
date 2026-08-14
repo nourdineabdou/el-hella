@@ -48,6 +48,11 @@ class Visit extends Model
         return $this->hasOne(Distribution::class);
     }
 
+    public function sample(): HasOne
+    {
+        return $this->hasOne(Sample::class);
+    }
+
     public function gpsAlert(): HasOne
     {
         return $this->hasOne(GpsAlert::class);
